@@ -1,0 +1,21 @@
+# Cloudflare Worker (mit statischen Assets) – Konfiguration für das Portal „Little-schoolapp"
+# Der Projektname muss zum Worker passen (laut URL: little-schoolapp.<subdomain>.workers.dev).
+name = "little-schoolapp"
+main = "worker.js"
+compatibility_date = "2024-11-01"
+
+# Im Dashboard gesetzte Variablen/Secrets (z. B. die Lehrer-PIN) bei Deploys
+# NICHT loeschen. Ohne dies wuerde jeder Git-Deploy Klartext-Variablen entfernen.
+keep_vars = true
+
+# Statische Dateien (index.html, lehrer.html, games/<game>/ …) aus dem Repo-Root.
+# Der Worker erreicht sie über die Bindung ASSETS; /api/* bedient der Worker selbst.
+[assets]
+directory = "."
+binding = "ASSETS"
+
+# KV-Speicher für die Spielstände. Derselbe Namespace wie bei little-chemie8,
+# damit Klassen + Lehrer-PIN erhalten bleiben.
+[[kv_namespaces]]
+binding = "PROGRESS"
+id = "3d5084f60edb457da08df691b31a0a0d"
