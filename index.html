@@ -1,1 +1,98 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Little-schoolapp · Anmelden</title>
+  <style>
+    :root{--ink:#21160f;--muted:#5e5043;--line:#efe1d2;--bg:#fbf4ea;--orange:#ea580c;--blue:#2364d2;--red:#d94848}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:var(--ink);
+      display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;
+      background:radial-gradient(circle at 8% 4%,rgba(255,184,88,.30),transparent 26%),radial-gradient(circle at 92% 6%,rgba(74,130,255,.15),transparent 30%),var(--bg)}
+    .card{background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:0 12px 32px rgba(80,43,12,.12);
+      padding:28px clamp(20px,5vw,34px);max-width:420px;width:100%;text-align:center}
+    .big{font-size:3.4rem;line-height:1}
+    h1{margin:.3rem 0 .2rem;font-size:clamp(1.3rem,4vw,1.7rem);font-weight:800}
+    p.sub{margin:0 0 18px;color:var(--muted);font-weight:600;font-size:.92rem}
+    input{font:inherit;font-weight:600;width:100%;text-align:center;border:1px solid var(--line);border-radius:13px;
+      padding:12px 13px;background:#fff;color:var(--ink);margin:8px 0}
+    button{font:inherit;font-weight:800;border:0;border-radius:13px;cursor:pointer;width:100%;padding:13px 15px;margin-top:8px;color:#fff;
+      background:linear-gradient(135deg,var(--orange),var(--blue));box-shadow:0 4px 0 rgba(0,0,0,.16);transition:transform .08s,box-shadow .08s,filter .15s}
+    button:hover{filter:brightness(1.05)}
+    button:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.16)}
+    button:disabled{opacity:.6;cursor:default}
+    .err{color:var(--red);font-weight:700;font-size:.9rem;min-height:1.2em;margin:10px 0 0}
+    .foot{margin-top:18px;color:var(--muted);font-weight:600;font-size:.82rem}
+    .foot a{color:var(--blue);text-decoration:none}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="big">🏫</div>
+    <h1>Little-schoolapp</h1>
+    <p class="sub">Gib den <b>Klassencode</b> und den <b>Login-Namen</b> ein, die du von deiner Lehrkraft bekommen hast.</p>
+    <input id="code" placeholder="Klassencode" autocomplete="off" autocapitalize="off">
+    <input id="name" placeholder="Login-Name (z. B. Argon-01)" autocomplete="off" autocapitalize="off">
+    <button id="go">🚀 Losspielen</button>
+    <div id="err" class="err"></div>
+    <p class="foot">Lehrkraft? <a href="/lehrer.html">Zum Lehrer-Bereich</a></p>
+  </div>
 
+  <script>
+  const IDENT='schoolapp-ident-v1';
+  const $=s=>document.querySelector(s);
+  const err=$('#err');
+
+  function getIdent(){try{return JSON.parse(localStorage.getItem(IDENT)||'null')}catch(e){return null}}
+
+  // Schüler-Login: Klasse + Name prüfen, zugewiesenes Spiel ermitteln, weiterleiten.
+  async function submit(){
+    const code=$('#code').value.trim(), name=$('#name').value.trim();
+    if(!code||!name){err.textContent='Bitte Klassencode und Login-Namen eingeben.';return}
+    err.textContent='Prüfe …';$('#go').disabled=true;
+    let res,data={};
+    try{
+      res=await fetch('/api/progress?code='+encodeURIComponent(code)+'&name='+encodeURIComponent(name));
+      try{data=await res.json()}catch(e){}
+    }catch(e){err.textContent='Keine Verbindung. Bitte erneut versuchen.';$('#go').disabled=false;return}
+    if(res.status===403){
+      err.textContent=data.error==='unknown-name'
+        ?'Login-Name nicht gefunden. Bitte den von deiner Lehrkraft vergebenen Namen verwenden.'
+        :'Unbekannter Klassencode. Bitte bei deiner Lehrkraft erfragen.';
+      $('#go').disabled=false;return;
+    }
+    if(!res.ok){err.textContent='Anmeldung fehlgeschlagen ('+(res.status||'Netzwerk')+').';$('#go').disabled=false;return}
+    const game=data.game;
+    if(!game){err.textContent='Dieser Klasse ist noch kein Spiel zugewiesen. Bitte bei deiner Lehrkraft melden.';$('#go').disabled=false;return}
+    // Login fürs Spiel hinterlegen (gleiche Origin → in /games/<game>/ gültig).
+    localStorage.setItem(IDENT,JSON.stringify({code,name,game}));
+    location.href='/games/'+encodeURIComponent(game)+'/';
+  }
+
+  function bindForm(){
+    $('#go').onclick=submit;
+    ['#code','#name'].forEach(s=>$(s).addEventListener('keydown',e=>{if(e.key==='Enter')submit()}));
+    setTimeout(()=>{try{$('#code').focus()}catch(e){}},50);
+  }
+
+  // Bereits angemeldet? Spiel der Klasse serverseitig prüfen (kann neu zugewiesen
+  // worden sein) und direkt weiterleiten – sonst das Login-Formular zeigen.
+  (async function(){
+    const id=getIdent();
+    if(id&&id.code&&id.name){
+      try{
+        const r=await fetch('/api/progress?code='+encodeURIComponent(id.code)+'&name='+encodeURIComponent(id.name));
+        const d=await r.json().catch(()=>({}));
+        if(r.ok&&d.game){
+          localStorage.setItem(IDENT,JSON.stringify({code:id.code,name:id.name,game:d.game}));
+          location.href='/games/'+encodeURIComponent(d.game)+'/';return;
+        }
+        localStorage.removeItem(IDENT); // Klasse/Name nicht mehr gültig
+      }catch(e){/* offline → Login-Formular anzeigen */}
+    }
+    bindForm();
+  })();
+  </script>
+</body>
+</html>

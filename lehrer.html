@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Little-schoolapp · Lehrer-Bereich</title>
+  <style>
+    :root{--ink:#21160f;--muted:#5e5043;--line:#efe1d2;--bg:#fbf4ea;--orange:#ea580c;--blue:#2364d2;--green:#16a34a;--purple:#7c3aed;--red:#d94848}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:var(--ink);
+      background:radial-gradient(circle at 8% 4%,rgba(255,184,88,.30),transparent 26%),radial-gradient(circle at 92% 6%,rgba(74,130,255,.15),transparent 30%),var(--bg)}
+    header{padding:16px clamp(14px,3vw,28px);background:rgba(255,253,249,.92);border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+    h1{margin:0;font-size:clamp(1.2rem,3.5vw,1.7rem);font-weight:800}
+    header p{margin:5px 0 0;color:var(--muted);font-weight:600;font-size:.88rem}
+    main{max-width:920px;margin:0 auto;padding:20px clamp(12px,2.5vw,24px) 40px}
+    input,select{font:inherit;font-weight:600;border:1px solid var(--line);border-radius:13px;padding:11px 13px;background:#fff;color:var(--ink);min-width:160px}
+    button{font:inherit;font-weight:800;border:0;border-radius:13px;cursor:pointer;padding:11px 15px;color:#fff;
+      background:linear-gradient(135deg,var(--orange),var(--blue));box-shadow:0 4px 0 rgba(0,0,0,.16);transition:transform .08s,box-shadow .08s,filter .15s}
+    button:hover{filter:brightness(1.05)}
+    button:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.16)}
+    button.ghost{background:#fff;color:var(--ink);border:1px solid var(--line);box-shadow:0 3px 0 rgba(0,0,0,.06)}
+    button.danger{background:linear-gradient(135deg,#f87171,#dc2626)}
+    .err{color:var(--red);font-weight:700;font-size:.88rem;min-height:1.1em;margin:8px 0 0}
+    .status{color:var(--muted);font-weight:600;min-height:1.1em;margin:8px 0}
+    .status.err{color:var(--red)}
+    .panel{background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:0 8px 24px rgba(80,43,12,.08);padding:16px;margin-bottom:16px}
+    .panel h2{margin:0 0 12px;font-size:1.1rem}
+    .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+    .login{max-width:380px;margin:8vh auto 0;text-align:center}
+    .login .big{font-size:3.2rem}
+    .login input{width:100%;text-align:center;margin:10px 0}
+    .login button{width:100%}
+    .classrow{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #f3ece3;flex-wrap:wrap}
+    .classrow:last-child{border-bottom:0}
+    .classrow .meta{flex:1;min-width:160px}
+    .classrow .label{font-weight:800}
+    .classrow code{font-family:ui-monospace,Menlo,Consolas,monospace;background:#f3ece3;padding:2px 7px;border-radius:7px;font-weight:700}
+    .classrow .cnt{color:var(--muted);font-weight:700;font-size:.85rem}
+    .gametag{display:inline-block;padding:2px 9px;border-radius:999px;font-weight:800;font-size:.78rem;color:#fff;background:linear-gradient(135deg,var(--green),var(--blue))}
+    .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:#fff;margin-top:8px}
+    table{border-collapse:collapse;width:100%;min-width:520px}
+    th,td{padding:10px 12px;text-align:left;border-bottom:1px solid #f3ece3;white-space:nowrap}
+    th{font-size:.76rem;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);background:#fffaf3}
+    tbody tr:last-child td{border-bottom:0}
+    tbody tr:nth-child(odd){background:#fffdf9}
+    .rank{font-weight:800;color:var(--muted)}.rank.top{color:var(--orange)}
+    .name{font-weight:800}.num{font-weight:700;font-variant-numeric:tabular-nums}
+    .lvl{display:inline-block;padding:3px 9px;border-radius:999px;font-weight:800;font-size:.8rem;color:#fff;background:linear-gradient(135deg,var(--purple),var(--blue))}
+    .ago{color:var(--muted);font-weight:600;font-size:.85rem}
+    .empty{padding:22px;text-align:center;color:var(--muted);font-weight:600}
+    .summary{display:flex;flex-wrap:wrap;gap:10px;margin:6px 0 10px}
+    .stat{background:#fffaf3;border:1px solid var(--line);border-radius:12px;padding:8px 12px}
+    .stat b{display:block;font-size:1.2rem;font-weight:800}.stat span{font-size:.78rem;color:var(--muted);font-weight:700}
+    footer{text-align:center;padding:18px;color:var(--muted);font-weight:600;font-size:.82rem}
+    [hidden]{display:none!important}
+  </style>
+</head>
+<body>
+  <header>
+    <div><h1>🏫 Little-schoolapp · Lehrer-Bereich</h1><p>Klassencodes verwalten, Spiel zuweisen und Fortschritt einsehen.</p></div>
+    <button id="logout" class="ghost" hidden>Abmelden</button>
+  </header>
+
+  <main>
+    <!-- Login -->
+    <section id="loginView" class="login">
+      <div class="big">🔐</div>
+      <h2>Anmelden</h2>
+      <p style="color:#5e5043;font-weight:600">Mit deiner Lehrer-PIN.</p>
+      <input id="pin" type="password" placeholder="Lehrer-PIN" autocomplete="current-password">
+      <button id="loginBtn">Anmelden</button>
+      <p id="loginErr" class="err"></p>
+    </section>
+
+    <!-- Erst-Einrichtung: PIN festlegen -->
+    <section id="setupView" class="login" hidden>
+      <div class="big">🆕</div>
+      <h2>Lehrer-PIN festlegen</h2>
+      <p style="color:#5e5043;font-weight:600">Beim ersten Mal: Wähle eine PIN (mind. 4 Zeichen). Damit meldest du dich künftig an.</p>
+      <input id="newPin1" type="password" placeholder="Neue PIN" autocomplete="new-password">
+      <input id="newPin2" type="password" placeholder="PIN wiederholen" autocomplete="new-password">
+      <button id="setupBtn">PIN festlegen</button>
+      <p id="setupErr" class="err"></p>
+    </section>
+
+    <!-- Dashboard -->
+    <section id="dashView" hidden>
+      <div class="panel">
+        <h2>➕ Klasse anlegen</h2>
+        <div class="controls">
+          <input id="newCode" placeholder="Klassencode (z. B. 8b-chemie)" autocomplete="off">
+          <input id="newLabel" placeholder="Bezeichnung (optional)" autocomplete="off">
+          <input id="newCount" type="number" min="0" max="200" placeholder="Anzahl Schüler" style="max-width:150px">
+          <select id="newGame" title="Zugewiesenes Spiel"></select>
+          <button id="addClass">Anlegen</button>
+        </div>
+        <p style="color:#5e5043;font-weight:600;font-size:.85rem;margin:8px 0 0">Wähle das <b>Spiel</b> für die Klasse. Die Login-Namen (z. B. „Argon-01") werden automatisch erzeugt und nach dem Anlegen angezeigt.</p>
+        <p id="classMsg" class="status"></p>
+      </div>
+
+      <div class="panel">
+        <h2>📋 Meine Klassen</h2>
+        <div id="classList"><div class="empty">Lade …</div></div>
+      </div>
+
+      <div id="classDetail"></div>
+    </section>
+  </main>
+
+  <footer>Nur Spieldaten (entdeckte Begriffe, Münzen, XP) · keine Passwörter der Schüler:innen</footer>
+
+  <script>
+  const $=s=>document.querySelector(s);
+  let pin=sessionStorage.getItem('schoolapp-teacher-pin')||'';
+  let GAMES=[];
+  const gameTitle=id=>{const g=GAMES.find(x=>x.id===id);return g?g.title:(id||'–')};
+
+  function levelOf(x){let lvl=1,need=120,acc=0;while(x>=acc+need){acc+=need;lvl++;need=Math.round(need*1.3)}return lvl}
+  function ago(ts){if(!ts)return'–';const s=Math.floor((Date.now()-ts)/1000);if(s<60)return'gerade eben';const m=Math.floor(s/60);if(m<60)return'vor '+m+' Min';const h=Math.floor(m/60);if(h<24)return'vor '+h+' Std';const d=Math.floor(h/24);return'vor '+d+' Tag'+(d>1?'en':'')}
+  function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+
+  async function api(path,opts={}){
+    opts.headers=Object.assign({'X-Teacher-Pin':pin},opts.headers||{});
+    const r=await fetch(path,opts);
+    let data={};try{data=await r.json()}catch(e){}
+    return {status:r.status,ok:r.ok,data};
+  }
+
+  async function loadGames(){
+    try{const r=await fetch('api/games');const d=await r.json();GAMES=Array.isArray(d.games)?d.games:[]}catch(e){GAMES=[]}
+    if(!GAMES.length)GAMES=[{id:'chemie8',title:'Little Chemie 8'}];
+    const sel=$('#newGame');sel.innerHTML=GAMES.map(g=>`<option value="${esc(g.id)}">${esc(g.title)}</option>`).join('');
+  }
+
+  function hideAll(){$('#loginView').hidden=true;$('#setupView').hidden=true;$('#dashView').hidden=true;$('#logout').hidden=true;}
+  function showLogin(msg){
+    hideAll();$('#loginView').hidden=false;$('#loginErr').textContent=msg||'';
+    setTimeout(()=>{try{$('#pin').focus()}catch(e){}},50);
+  }
+  function showSetup(){
+    hideAll();$('#setupView').hidden=false;
+    setTimeout(()=>{try{$('#newPin1').focus()}catch(e){}},50);
+  }
+  function showDash(){
+    hideAll();$('#dashView').hidden=false;$('#logout').hidden=false;
+    loadGames();loadClasses();
+  }
+  async function setup(){
+    const a=$('#newPin1').value,b=$('#newPin2').value,e=$('#setupErr');
+    if(a.length<4){e.textContent='Mindestens 4 Zeichen.';return}
+    if(a!==b){e.textContent='Die PINs stimmen nicht überein.';return}
+    e.textContent='Speichere …';
+    let r,d={};
+    try{r=await fetch('api/teacher/setup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:a})});d=await r.json().catch(()=>({}))}catch(err){e.textContent='Netzwerkfehler.';return}
+    if(r.ok){pin=a;sessionStorage.setItem('schoolapp-teacher-pin',pin);showDash();return}
+    if(r.status===409){e.textContent='PIN wird über ein Worker-Secret verwaltet – hier nicht änderbar.';return}
+    e.textContent='Fehler ('+(r.status||'Netzwerk')+').';
+  }
+  async function boot(){
+    let st=null;try{const r=await fetch('api/teacher/status');st=await r.json()}catch(e){}
+    if(!st){showLogin('Keine Verbindung zum Server.');return}
+    if(!st.configured){showSetup();return}
+    if(pin){const res=await api('api/teacher/login',{method:'POST'});if(res.ok){showDash();return}pin='';sessionStorage.removeItem('schoolapp-teacher-pin');}
+    showLogin('');
+  }
+
+  async function login(){
+    pin=$('#pin').value;
+    if(!pin){$('#loginErr').textContent='Bitte PIN eingeben.';return}
+    $('#loginErr').textContent='Prüfe …';
+    const res=await api('api/teacher/login',{method:'POST'});
+    if(res.status===401){pin='';$('#loginErr').textContent='Falsche PIN.';return}
+    if(res.status===503){$('#loginErr').textContent='Lehrer-PIN ist im Worker noch nicht eingerichtet (Secret TEACHER_PIN / Teacher setzen).';return}
+    if(!res.ok){$('#loginErr').textContent='Fehler ('+(res.status||'Netzwerk')+').';return}
+    sessionStorage.setItem('schoolapp-teacher-pin',pin);
+    showDash();
+  }
+  function logout(){sessionStorage.removeItem('schoolapp-teacher-pin');pin='';$('#classDetail').innerHTML='';showLogin('')}
+
+  async function loadClasses(){
+    const box=$('#classList');box.innerHTML='<div class="empty">Lade …</div>';
+    const res=await api('api/teacher/classes');
+    if(res.status===401){return logout()}
+    if(!res.ok){box.innerHTML='<div class="empty">Fehler beim Laden ('+res.status+').</div>';return}
+    const classes=res.data.classes||[];
+    if(!classes.length){box.innerHTML='<div class="empty">Noch keine Klassen. Lege oben eine an – den Code geben deine Schüler:innen im Portal ein.</div>';return}
+    box.innerHTML=classes.map(c=>
+      `<div class="classrow">`+
+        `<div class="meta"><div class="label">${esc(c.label||c.code)} <span class="gametag">${esc(gameTitle(c.game))}</span></div>`+
+          `<span class="cnt">Code: </span><code>${esc(c.code)}</code> <span class="cnt">· ${c.slots} Logins · ${c.students} aktiv</span></div>`+
+        `<button class="ghost" data-view="${esc(c.code)}">Anzeigen</button>`+
+        `<button class="danger" data-del="${esc(c.code)}">Löschen</button>`+
+      `</div>`
+    ).join('');
+    box.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>viewClass(b.dataset.view));
+    box.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>delClass(b.dataset.del));
+  }
+
+  async function addClass(){
+    const code=$('#newCode').value.trim();
+    const label=$('#newLabel').value.trim();
+    const count=parseInt($('#newCount').value,10)||0;
+    const game=$('#newGame').value;
+    const msg=$('#classMsg');
+    if(!code){msg.textContent='Bitte einen Klassencode eingeben.';msg.className='status err';return}
+    msg.className='status';msg.textContent='Lege an …';
+    const res=await api('api/teacher/classes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code,label,count,game})});
+    if(res.status===401){return logout()}
+    if(!res.ok){msg.textContent='Fehler ('+res.status+').';msg.className='status err';return}
+    $('#newCode').value='';$('#newLabel').value='';$('#newCount').value='';
+    msg.textContent='Klasse „'+(label||code)+'" angelegt ('+gameTitle(game)+')'+(count?(' mit '+count+' Logins'):'')+'.';
+    loadClasses();
+    viewClass(res.data.class?res.data.class.code:code);
+  }
+  async function addLogins(code){
+    const n=parseInt($('#moreCount').value,10)||0;
+    if(n<1)return;
+    const res=await api('api/teacher/classes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code,count:n})});
+    if(res.status===401){return logout()}
+    loadClasses();viewClass(code);
+  }
+
+  async function delClass(code){
+    if(!confirm('Klassencode „'+code+'" wirklich löschen? Schüler:innen können sich damit dann nicht mehr anmelden. (Vorhandene Spielstände bleiben gespeichert.)'))return;
+    const res=await api('api/teacher/classes',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({code})});
+    if(res.status===401){return logout()}
+    $('#classDetail').innerHTML='';
+    loadClasses();
+  }
+
+  function rowFor(n,name,s){
+    if(!s)return '<tr><td class="rank">'+n+'.</td><td class="name">'+esc(name)+'</td><td colspan="5" class="ago">noch nicht gespielt</td></tr>';
+    return '<tr><td class="rank">'+n+'.</td><td class="name">'+esc(name)+'</td>'+
+      '<td><span class="lvl">Lvl '+levelOf(s.xp||0)+'</span></td>'+
+      '<td class="num">'+(s.entdeckt||0)+'</td>'+
+      '<td class="num">🪙 '+(s.muenzen||0)+'</td>'+
+      '<td class="num">'+(s.xp||0)+'</td>'+
+      '<td class="ago">'+ago(s.updated)+'</td></tr>';
+  }
+  async function viewClass(code){
+    const box=$('#classDetail');
+    box.innerHTML='<div class="panel"><div class="empty">Lade …</div></div>';
+    const res=await api('api/class?code='+encodeURIComponent(code));
+    if(res.status===401){return logout()}
+    if(!res.ok){box.innerHTML='<div class="panel"><div class="empty">Fehler ('+res.status+').</div></div>';return}
+    const slots=res.data.slots||[], students=res.data.students||[], game=res.data.game;
+    const map={};students.forEach(s=>{map[(s.name||'').toLowerCase()]=s});
+    const active=students.length, avg=active?Math.round(students.reduce((a,s)=>a+(s.xp||0),0)/active):0;
+    let html='<div class="panel"><h2>👥 Klasse: '+esc(code)+' <span class="gametag">'+esc(gameTitle(game))+'</span></h2>';
+    html+='<div class="controls" style="margin-bottom:10px"><input id="moreCount" type="number" min="1" max="200" placeholder="Anzahl"style="max-width:130px"><button id="addLoginsBtn" class="ghost">+ Logins erzeugen</button></div>';
+    html+='<div class="summary"><div class="stat"><b>'+slots.length+'</b><span>Logins</span></div><div class="stat"><b>'+active+'</b><span>aktiv</span></div><div class="stat"><b>'+avg+'</b><span>Ø XP (aktiv)</span></div></div>';
+    if(!slots.length && !students.length){
+      html+='<div class="empty">Noch keine Logins. Erzeuge oben welche – die Namen erscheinen dann hier.</div></div>';
+      box.innerHTML=html;const b=$('#addLoginsBtn');if(b)b.onclick=()=>addLogins(code);return;
+    }
+    const slotSet={};slots.forEach(n=>slotSet[n.toLowerCase()]=1);
+    const rows=[];
+    if(slots.length){
+      slots.forEach((name,i)=>rows.push(rowFor(i+1,name,map[name.toLowerCase()])));
+      students.filter(s=>!slotSet[(s.name||'').toLowerCase()]).forEach((s,i)=>rows.push(rowFor(slots.length+i+1,s.name,s)));
+    }else{
+      students.slice().sort((a,b)=>b.xp-a.xp).forEach((s,i)=>rows.push(rowFor(i+1,s.name,s)));
+    }
+    html+='<div class="tablewrap"><table><thead><tr><th>#</th><th>Login-Name</th><th>Level</th><th>Begriffe</th><th>Münzen</th><th>XP</th><th>Zuletzt aktiv</th></tr></thead><tbody>'+rows.join('')+'</tbody></table></div></div>';
+    box.innerHTML=html;
+    const b=$('#addLoginsBtn');if(b)b.onclick=()=>addLogins(code);
+  }
+
+  $('#loginBtn').onclick=login;
+  $('#pin').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
+  $('#setupBtn').onclick=setup;
+  ['#newPin1','#newPin2'].forEach(s=>$(s).addEventListener('keydown',e=>{if(e.key==='Enter')setup()}));
+  $('#logout').onclick=logout;
+  $('#addClass').onclick=addClass;
+  ['#newCode','#newLabel'].forEach(s=>$(s).addEventListener('keydown',e=>{if(e.key==='Enter')addClass()}));
+
+  boot();
+  </script>
+</body>
+</html>
