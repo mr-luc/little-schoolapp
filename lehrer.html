@@ -66,8 +66,9 @@
     <section id="loginView" class="login">
       <div class="big">🔐</div>
       <h2>Anmelden</h2>
-      <p style="color:#5e5043;font-weight:600">Mit deiner Lehrer-PIN.</p>
-      <input id="pin" type="password" placeholder="Lehrer-PIN" autocomplete="current-password">
+      <p style="color:#5e5043;font-weight:600">Lehrer: <b>Benutzername + PIN</b>. Admin: Feld leer lassen, nur Admin-PIN.</p>
+      <input id="user" placeholder="Benutzername (leer = Admin)" autocomplete="username" autocapitalize="off">
+      <input id="pin" type="password" placeholder="PIN" autocomplete="current-password">
       <button id="loginBtn">Anmelden</button>
       <p id="loginErr" class="err"></p>
     </section>
@@ -85,6 +86,20 @@
 
     <!-- Dashboard -->
     <section id="dashView" hidden>
+      <!-- Admin: Lehrer-Logins verwalten (nur für Admin sichtbar) -->
+      <div id="adminPanel" class="panel" hidden>
+        <h2>🛡️ Lehrer-Logins verwalten <span class="gametag">Admin</span></h2>
+        <div class="controls">
+          <input id="tUser" placeholder="Benutzername (a–z, 0–9, - _)" autocomplete="off" autocapitalize="off">
+          <input id="tLabel" placeholder="Name/Bezeichnung (optional)" autocomplete="off">
+          <input id="tPin" type="text" placeholder="PIN (mind. 4 Zeichen)" autocomplete="off" style="max-width:170px">
+          <button id="addTeacher">Lehrer anlegen</button>
+        </div>
+        <p style="color:#5e5043;font-weight:600;font-size:.85rem;margin:8px 0 0">Lehrer melden sich mit <b>Benutzername + PIN</b> an und sehen nur ihre eigenen Klassen.</p>
+        <p id="teacherMsg" class="status"></p>
+        <div id="teacherList"><div class="empty">Lade …</div></div>
+      </div>
+
       <div class="panel">
         <h2>➕ Klasse anlegen</h2>
         <div class="controls">
@@ -112,6 +127,8 @@
   <script>
   const $=s=>document.querySelector(s);
   let pin=sessionStorage.getItem('schoolapp-teacher-pin')||'';
+  let user=sessionStorage.getItem('schoolapp-teacher-user')||'';
+  let role='';
   let GAMES=[];
   const gameTitle=id=>{const g=GAMES.find(x=>x.id===id);return g?g.title:(id||'–')};
 
@@ -120,7 +137,7 @@
   function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
 
   async function api(path,opts={}){
-    opts.headers=Object.assign({'X-Teacher-Pin':pin},opts.headers||{});
+    opts.headers=Object.assign({'X-Teacher-Pin':pin,'X-Teacher-User':user},opts.headers||{});
     const r=await fetch(path,opts);
     let data={};try{data=await r.json()}catch(e){}
     return {status:r.status,ok:r.ok,data};
@@ -143,7 +160,10 @@
   }
   function showDash(){
     hideAll();$('#dashView').hidden=false;$('#logout').hidden=false;
+    const admin=role==='admin';
+    $('#adminPanel').hidden=!admin;
     loadGames();loadClasses();
+    if(admin)loadTeachers();
   }
   async function setup(){
     const a=$('#newPin1').value,b=$('#newPin2').value,e=$('#setupErr');
@@ -152,7 +172,7 @@
     e.textContent='Speichere …';
     let r,d={};
     try{r=await fetch('api/teacher/setup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:a})});d=await r.json().catch(()=>({}))}catch(err){e.textContent='Netzwerkfehler.';return}
-    if(r.ok){pin=a;sessionStorage.setItem('schoolapp-teacher-pin',pin);showDash();return}
+    if(r.ok){pin=a;user='';role='admin';sessionStorage.setItem('schoolapp-teacher-pin',pin);sessionStorage.removeItem('schoolapp-teacher-user');showDash();return}
     if(r.status===409){e.textContent='PIN wird über ein Worker-Secret verwaltet – hier nicht änderbar.';return}
     e.textContent='Fehler ('+(r.status||'Netzwerk')+').';
   }
@@ -160,22 +180,75 @@
     let st=null;try{const r=await fetch('api/teacher/status');st=await r.json()}catch(e){}
     if(!st){showLogin('Keine Verbindung zum Server.');return}
     if(!st.configured){showSetup();return}
-    if(pin){const res=await api('api/teacher/login',{method:'POST'});if(res.ok){showDash();return}pin='';sessionStorage.removeItem('schoolapp-teacher-pin');}
+    if(pin){const res=await api('api/teacher/login',{method:'POST'});if(res.ok){role=res.data.role||'';showDash();return}pin='';user='';sessionStorage.removeItem('schoolapp-teacher-pin');sessionStorage.removeItem('schoolapp-teacher-user');}
     showLogin('');
   }
 
   async function login(){
-    pin=$('#pin').value;
+    pin=$('#pin').value;user=($('#user').value||'').trim().toLowerCase();
     if(!pin){$('#loginErr').textContent='Bitte PIN eingeben.';return}
     $('#loginErr').textContent='Prüfe …';
     const res=await api('api/teacher/login',{method:'POST'});
-    if(res.status===401){pin='';$('#loginErr').textContent='Falsche PIN.';return}
-    if(res.status===503){$('#loginErr').textContent='Lehrer-PIN ist im Worker noch nicht eingerichtet (Secret TEACHER_PIN / Teacher setzen).';return}
+    if(res.status===401){pin='';$('#loginErr').textContent=user?'Benutzername oder PIN falsch.':'Falsche Admin-PIN.';return}
+    if(res.status===503){$('#loginErr').textContent='Admin-PIN ist im Worker noch nicht eingerichtet.';return}
     if(!res.ok){$('#loginErr').textContent='Fehler ('+(res.status||'Netzwerk')+').';return}
+    role=res.data.role||'';
     sessionStorage.setItem('schoolapp-teacher-pin',pin);
+    if(user)sessionStorage.setItem('schoolapp-teacher-user',user);else sessionStorage.removeItem('schoolapp-teacher-user');
     showDash();
   }
-  function logout(){sessionStorage.removeItem('schoolapp-teacher-pin');pin='';$('#classDetail').innerHTML='';showLogin('')}
+  function logout(){sessionStorage.removeItem('schoolapp-teacher-pin');sessionStorage.removeItem('schoolapp-teacher-user');pin='';user='';role='';$('#classDetail').innerHTML='';showLogin('')}
+
+  async function loadTeachers(){
+    const box=$('#teacherList');box.innerHTML='<div class="empty">Lade …</div>';
+    const res=await api('api/admin/teachers');
+    if(res.status===401){return logout()}
+    if(res.status===403){box.innerHTML='';return}
+    if(!res.ok){box.innerHTML='<div class="empty">Fehler beim Laden ('+res.status+').</div>';return}
+    const teachers=res.data.teachers||[];
+    if(!teachers.length){box.innerHTML='<div class="empty">Noch keine Lehrer-Logins. Lege oben eines an.</div>';return}
+    box.innerHTML=teachers.map(t=>
+      `<div class="classrow">`+
+        `<div class="meta"><div class="label">${esc(t.label||t.username)}</div>`+
+          `<span class="cnt">Benutzer: </span><code>${esc(t.username)}</code> <span class="cnt">· ${t.classes} Klasse(n)</span></div>`+
+        `<button class="ghost" data-pin="${esc(t.username)}">Neue PIN</button>`+
+        `<button class="danger" data-delt="${esc(t.username)}">Löschen</button>`+
+      `</div>`
+    ).join('');
+    box.querySelectorAll('[data-pin]').forEach(b=>b.onclick=()=>resetTeacherPin(b.dataset.pin));
+    box.querySelectorAll('[data-delt]').forEach(b=>b.onclick=()=>delTeacher(b.dataset.delt));
+  }
+  async function addTeacher(){
+    const username=($('#tUser').value||'').trim().toLowerCase();
+    const label=$('#tLabel').value.trim();
+    const pin2=$('#tPin').value.trim();
+    const msg=$('#teacherMsg');
+    if(!/^[a-z0-9_-]{1,40}$/.test(username)||username==='admin'){msg.className='status err';msg.textContent='Benutzername: a–z, 0–9, „-" oder „_" (nicht „admin").';return}
+    if(pin2.length<4){msg.className='status err';msg.textContent='PIN: mindestens 4 Zeichen.';return}
+    msg.className='status';msg.textContent='Lege an …';
+    const res=await api('api/admin/teachers',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,label,pin:pin2})});
+    if(res.status===401){return logout()}
+    if(!res.ok){msg.className='status err';msg.textContent='Fehler ('+res.status+').';return}
+    $('#tUser').value='';$('#tLabel').value='';$('#tPin').value='';
+    msg.textContent='Lehrer „'+(label||username)+'" angelegt (Login: '+username+').';
+    loadTeachers();
+  }
+  async function resetTeacherPin(username){
+    const np=prompt('Neue PIN für „'+username+'" (mind. 4 Zeichen):','');
+    if(np===null)return;
+    if(np.trim().length<4){alert('PIN zu kurz (mind. 4 Zeichen).');return}
+    const res=await api('api/admin/teachers',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,pin:np.trim()})});
+    if(res.status===401){return logout()}
+    const msg=$('#teacherMsg');
+    if(!res.ok){msg.className='status err';msg.textContent='Fehler ('+res.status+').';return}
+    msg.className='status';msg.textContent='Neue PIN für „'+username+'" gesetzt.';
+  }
+  async function delTeacher(username){
+    if(!confirm('Lehrer-Login „'+username+'" wirklich löschen? Die angelegten Klassen bleiben erhalten (nur noch für den Admin sichtbar).'))return;
+    const res=await api('api/admin/teachers',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({username})});
+    if(res.status===401){return logout()}
+    loadTeachers();
+  }
 
   async function loadClasses(){
     const box=$('#classList');box.innerHTML='<div class="empty">Lade …</div>';
@@ -186,7 +259,8 @@
     if(!classes.length){box.innerHTML='<div class="empty">Noch keine Klassen. Lege oben eine an – den Code geben deine Schüler:innen im Portal ein.</div>';return}
     box.innerHTML=classes.map(c=>
       `<div class="classrow">`+
-        `<div class="meta"><div class="label">${esc(c.label||c.code)} <span class="gametag">${esc(gameTitle(c.game))}</span></div>`+
+        `<div class="meta"><div class="label">${esc(c.label||c.code)} <span class="gametag">${esc(gameTitle(c.game))}</span>`+
+          `${role==='admin'&&c.owner?` <span class="cnt">👤 ${esc(c.owner)}</span>`:''}</div>`+
           `<span class="cnt">Code: </span><code>${esc(c.code)}</code> <span class="cnt">· ${c.slots} Logins · ${c.students} aktiv</span></div>`+
         `<button class="ghost" data-view="${esc(c.code)}">Anzeigen</button>`+
         `<button class="danger" data-del="${esc(c.code)}">Löschen</button>`+
@@ -267,7 +341,9 @@
   }
 
   $('#loginBtn').onclick=login;
-  $('#pin').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
+  ['#user','#pin'].forEach(s=>$(s).addEventListener('keydown',e=>{if(e.key==='Enter')login()}));
+  $('#addTeacher').onclick=addTeacher;
+  ['#tUser','#tLabel','#tPin'].forEach(s=>$(s).addEventListener('keydown',e=>{if(e.key==='Enter')addTeacher()}));
   $('#setupBtn').onclick=setup;
   ['#newPin1','#newPin2'].forEach(s=>$(s).addEventListener('keydown',e=>{if(e.key==='Enter')setup()}));
   $('#logout').onclick=logout;

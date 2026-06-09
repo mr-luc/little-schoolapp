@@ -31,6 +31,9 @@ const stKey = (c, n, g) => `st:${encodeURIComponent(norm(c))}:${encodeURICompone
 const stPrefix = (c) => `st:${encodeURIComponent(norm(c))}:`;
 const stSuffix = (g) => `:${encodeURIComponent(norm(g))}`;
 const classKey = (c) => `class:${encodeURIComponent(norm(c))}`;
+const teacherKey = (u) => `teacher:${encodeURIComponent(norm(u))}`;
+const ADMIN_USER = 'admin'; // reservierter Benutzername für die Admin-Rolle
+const validUser = (u) => /^[a-z0-9_-]{1,40}$/.test(norm(u)) && norm(u) !== ADMIN_USER;
 const json = (obj, status = 200) =>
   new Response(JSON.stringify(obj), { status, headers: { 'Content-Type': 'application/json', ...CORS } });
 
@@ -40,6 +43,24 @@ async function resolvePin(env) {
   if (e) return e;
   try { return (await env.PROGRESS.get('cfg:teacherpin')) || ''; } catch (e2) { return ''; }
 }
+
+// Wer ist angemeldet? Admin (Master-PIN) oder ein Lehrer (Benutzername + PIN).
+// Liefert { role:'admin'|'teacher', user } oder null bei ungültigen Daten.
+async function authCtx(request, env, url) {
+  const pin = request.headers.get('X-Teacher-Pin') || url.searchParams.get('pin') || '';
+  const user = norm(request.headers.get('X-Teacher-User') || url.searchParams.get('user') || '');
+  if (user && user !== ADMIN_USER) {
+    const raw = await env.PROGRESS.get(teacherKey(user));
+    if (!raw) return null;
+    let t; try { t = JSON.parse(raw); } catch (e) { return null; }
+    if (!t || !t.pin || pin !== t.pin) return null;
+    return { role: 'teacher', user };
+  }
+  const adminPin = await resolvePin(env);
+  if (adminPin && pin === adminPin) return { role: 'admin', user: ADMIN_USER };
+  return null;
+}
+const owns = (ctx, cls) => ctx.role === 'admin' || norm(cls && cls.owner) === ctx.user;
 
 function sanitize(s) {
   if (!s || typeof s !== 'object') return null;
@@ -144,15 +165,63 @@ async function handleApi(request, env, url) {
     return json({ error: 'method-not-allowed' }, 405);
   }
 
-  // ---- Ab hier: Lehrer-Bereich (PIN nötig) ----
-  if (p === '/api/teacher/login' || p === '/api/teacher/classes' || p === '/api/class') {
+  // ---- Ab hier: Lehrer-/Admin-Bereich (Anmeldung nötig) ----
+  if (p === '/api/teacher/login' || p === '/api/teacher/classes' || p === '/api/class' || p === '/api/admin/teachers') {
     if (!env.PROGRESS) return json({ error: 'kv-not-bound' }, 500);
     const tp = await resolvePin(env);
     if (!tp) return json({ error: 'teacher-pin-not-configured' }, 503);
-    const pin = request.headers.get('X-Teacher-Pin') || url.searchParams.get('pin') || '';
-    if (pin !== tp) return json({ error: 'unauthorized' }, 401);
+    const ctx = await authCtx(request, env, url);
+    if (!ctx) return json({ error: 'unauthorized' }, 401);
 
-    if (p === '/api/teacher/login') return json({ ok: true });
+    if (p === '/api/teacher/login') return json({ ok: true, role: ctx.role, user: ctx.user });
+
+    // ---- Admin: Lehrer-Logins verwalten ----
+    if (p === '/api/admin/teachers') {
+      if (ctx.role !== 'admin') return json({ error: 'forbidden' }, 403);
+      if (request.method === 'GET') {
+        const list = await env.PROGRESS.list({ prefix: 'teacher:' });
+        const teachers = [];
+        for (const k of list.keys) {
+          const raw = await env.PROGRESS.get(k.name);
+          if (!raw) continue;
+          let t; try { t = JSON.parse(raw); } catch (e) { continue; }
+          const cl = await env.PROGRESS.list({ prefix: 'class:' });
+          let classes = 0;
+          for (const ck of cl.keys) {
+            const cr = await env.PROGRESS.get(ck.name);
+            if (cr && norm(JSON.parse(cr).owner) === norm(t.username)) classes++;
+          }
+          teachers.push({ username: t.username, label: t.label || '', created: t.created || 0, classes });
+        }
+        teachers.sort((a, b) => (a.label || a.username).localeCompare(b.label || b.username));
+        return json({ teachers });
+      }
+      if (request.method === 'POST') {
+        let body;
+        try { body = await request.json(); } catch (e) { return json({ error: 'bad-json' }, 400); }
+        const username = norm(body && body.username);
+        if (!validUser(username)) return json({ error: 'bad-username' }, 400);
+        const pin = String((body && body.pin) || '').trim();
+        const raw = await env.PROGRESS.get(teacherKey(username));
+        const cur = raw ? JSON.parse(raw) : null;
+        // PIN nur beim Anlegen Pflicht; beim Bearbeiten optional (leer = beibehalten).
+        if (!cur && pin.length < 4) return json({ error: 'pin-too-short' }, 400);
+        if (pin && pin.length < 4) return json({ error: 'pin-too-short' }, 400);
+        const label = String((body && body.label) || (cur && cur.label) || '').trim().slice(0, 60);
+        const t = { username, pin: pin || (cur && cur.pin) || '', label, created: cur ? (cur.created || Date.now()) : Date.now() };
+        await env.PROGRESS.put(teacherKey(username), JSON.stringify(t));
+        return json({ ok: true, teacher: { username: t.username, label: t.label, created: t.created } });
+      }
+      if (request.method === 'DELETE') {
+        let body;
+        try { body = await request.json(); } catch (e) { return json({ error: 'bad-json' }, 400); }
+        const username = norm(body && body.username);
+        if (!username) return json({ error: 'bad-username' }, 400);
+        await env.PROGRESS.delete(teacherKey(username));
+        return json({ ok: true });
+      }
+      return json({ error: 'method-not-allowed' }, 405);
+    }
 
     if (p === '/api/teacher/classes') {
       if (request.method === 'GET') {
@@ -162,11 +231,12 @@ async function handleApi(request, env, url) {
           const raw = await env.PROGRESS.get(k.name);
           if (!raw) continue;
           const c = JSON.parse(raw);
+          if (!owns(ctx, c)) continue; // Lehrer sehen nur eigene Klassen; Admin alle
           const game = classGame(c);
           const sl = await env.PROGRESS.list({ prefix: stPrefix(c.code) });
           const suffix = stSuffix(game);
           const students = sl.keys.filter((sk) => sk.name.endsWith(suffix)).length;
-          classes.push({ code: c.code, label: c.label || '', created: c.created || 0, game, slots: Array.isArray(c.slots) ? c.slots.length : 0, students });
+          classes.push({ code: c.code, label: c.label || '', created: c.created || 0, game, owner: c.owner || '', slots: Array.isArray(c.slots) ? c.slots.length : 0, students });
         }
         classes.sort((a, b) => (a.label || a.code).localeCompare(b.label || b.code));
         return json({ classes });
@@ -179,7 +249,9 @@ async function handleApi(request, env, url) {
         const count = Math.max(0, Math.min(200, parseInt((body && body.count), 10) || 0));
         const raw = await env.PROGRESS.get(classKey(code));
         const cur = raw ? JSON.parse(raw) : null;
+        if (cur && !owns(ctx, cur)) return json({ error: 'forbidden' }, 403); // fremde Klasse
         const created = cur ? (cur.created || Date.now()) : Date.now();
+        const owner = cur ? (cur.owner || ctx.user) : ctx.user; // Eigentümer = Ersteller
         const label = String((body && body.label) || (cur && cur.label) || '').trim().slice(0, 60);
         // Spiel: explizit gewähltes (sofern bekannt), sonst bestehendes, sonst Standard.
         const reqGame = norm(body && body.game);
@@ -187,7 +259,7 @@ async function handleApi(request, env, url) {
         let slots = (cur && Array.isArray(cur.slots)) ? cur.slots.slice() : [];
         if (slots.length + count > 500) return json({ error: 'too-many' }, 400);
         if (count > 0) slots = slots.concat(genSlots(slots, count));
-        const cls = { code, label, created, slots, game };
+        const cls = { code, label, created, slots, game, owner };
         await env.PROGRESS.put(classKey(code), JSON.stringify(cls));
         return json({ ok: true, class: cls });
       }
@@ -196,6 +268,8 @@ async function handleApi(request, env, url) {
         try { body = await request.json(); } catch (e) { return json({ error: 'bad-json' }, 400); }
         const code = norm(body && body.code);
         if (!code) return json({ error: 'bad-code' }, 400);
+        const raw = await env.PROGRESS.get(classKey(code));
+        if (raw && !owns(ctx, JSON.parse(raw))) return json({ error: 'forbidden' }, 403);
         await env.PROGRESS.delete(classKey(code));
         return json({ ok: true });
       }
@@ -207,6 +281,7 @@ async function handleApi(request, env, url) {
       if (!code) return json({ error: 'bad-params' }, 400);
       const clsRaw = await env.PROGRESS.get(classKey(code));
       const cls = clsRaw ? JSON.parse(clsRaw) : null;
+      if (cls && !owns(ctx, cls)) return json({ error: 'forbidden' }, 403); // fremde Klasse
       const game = classGame(cls || {});
       const slots = cls && Array.isArray(cls.slots) ? cls.slots : [];
       const prefix = stPrefix(code);
@@ -227,7 +302,7 @@ async function handleApi(request, env, url) {
         });
       }
       students.sort((a, b) => b.xp - a.xp);
-      return json({ code, game, slots, anzahl: students.length, students });
+      return json({ code, game, owner: cls && cls.owner || '', slots, anzahl: students.length, students });
     }
   }
 

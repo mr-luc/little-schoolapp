@@ -34,11 +34,27 @@ Dieses Projekt läuft als **Cloudflare Worker mit statischen Assets**
 
 ## Datenmodell (KV-Namespace `PROGRESS`)
 
-- `class:<code>` → `{ code, label, created, slots:[namen], game }`
-  – Feld `game` = das der Klasse zugewiesene Spiel.
+- `class:<code>` → `{ code, label, created, slots:[namen], game, owner }`
+  – Feld `game` = das der Klasse zugewiesene Spiel; `owner` = Benutzername der
+  Lehrkraft, die die Klasse angelegt hat (oder `admin`).
 - `st:<code>:<name>:<game>` → Spielstand `{ deck, coins, xp, name, game, updated }`
   – Spiel im Schlüssel, damit Stände je Spiel getrennt sind.
-- `cfg:teacherpin` → Lehrer-PIN.
+- `cfg:teacherpin` → **Admin-PIN**.
+- `teacher:<username>` → Lehrer-Login `{ username, pin, label, created }`.
+
+## Rollen: Admin & Lehrer
+
+- **Admin** meldet sich nur mit der **Admin-PIN** an (Benutzername leer). Der
+  Admin sieht **alle** Klassen und verwaltet im Bereich „Lehrer-Logins" die
+  Lehrkräfte (anlegen, PIN neu setzen, löschen).
+- **Lehrer** melden sich mit **Benutzername + PIN** an und sehen/verwalten nur
+  **ihre eigenen** Klassen.
+- Authentifizierung per Header `X-Teacher-Pin` (+ `X-Teacher-User` für Lehrer).
+  Klassen-Endpunkte prüfen Eigentum; admin-only ist `/api/admin/teachers`.
+
+### Endpunkte (Admin)
+- `GET|POST|DELETE /api/admin/teachers` – Lehrer-Logins verwalten
+  (POST legt an/aktualisiert; PIN beim Anlegen Pflicht, beim Bearbeiten optional).
 
 ## Worker-Endpunkte
 
@@ -67,8 +83,9 @@ Dieses Projekt läuft als **Cloudflare Worker mit statischen Assets**
 
 ## Lehrer-Bereich
 
-Seite: **`https://DEINE-URL/lehrer.html`** – Login **nur mit der Lehrer-PIN**.
-Danach im Bereich:
+Seite: **`https://DEINE-URL/lehrer.html`** – Login als **Admin** (nur Admin-PIN,
+Benutzername leer) oder als **Lehrer** (Benutzername + PIN). Der Admin legt
+Lehrer-Logins im Bereich „Lehrer-Logins verwalten" an. Danach im Bereich:
 
 - **Klasse anlegen:** Klassencode + optionale Bezeichnung + **Anzahl Schüler** +
   **Spiel (Dropdown)**. Die **Login-Namen werden automatisch erzeugt** (z. B.
