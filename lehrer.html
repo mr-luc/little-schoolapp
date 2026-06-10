@@ -322,10 +322,11 @@
     const active=students.length, avg=active?Math.round(students.reduce((a,s)=>a+(s.xp||0),0)/active):0;
     let html='<div class="panel"><h2>👥 Klasse: '+esc(code)+' <span class="gametag">'+esc(gameTitle(game))+'</span></h2>';
     html+='<div class="controls" style="margin-bottom:10px"><input id="moreCount" type="number" min="1" max="200" placeholder="Anzahl"style="max-width:130px"><button id="addLoginsBtn" class="ghost">+ Logins erzeugen</button></div>';
+    html+='<div class="controls" style="margin-bottom:10px"><span class="cnt">Spiel:</span><select id="changeGame">'+GAMES.map(g=>`<option value="${esc(g.id)}"${g.id===game?' selected':''}>${esc(g.title)}</option>`).join('')+'</select><button id="changeGameBtn" class="ghost">Spiel zuweisen</button></div>';
     html+='<div class="summary"><div class="stat"><b>'+slots.length+'</b><span>Logins</span></div><div class="stat"><b>'+active+'</b><span>aktiv</span></div><div class="stat"><b>'+avg+'</b><span>Ø XP (aktiv)</span></div></div>';
     if(!slots.length && !students.length){
       html+='<div class="empty">Noch keine Logins. Erzeuge oben welche – die Namen erscheinen dann hier.</div></div>';
-      box.innerHTML=html;const b=$('#addLoginsBtn');if(b)b.onclick=()=>addLogins(code);return;
+      box.innerHTML=html;const b=$('#addLoginsBtn');if(b)b.onclick=()=>addLogins(code);const cg0=$('#changeGameBtn');if(cg0)cg0.onclick=()=>changeGame(code);return;
     }
     const slotSet={};slots.forEach(n=>slotSet[n.toLowerCase()]=1);
     const rows=[];
@@ -338,6 +339,15 @@
     html+='<div class="tablewrap"><table><thead><tr><th>#</th><th>Login-Name</th><th>Level</th><th>Begriffe</th><th>Münzen</th><th>XP</th><th>Zuletzt aktiv</th></tr></thead><tbody>'+rows.join('')+'</tbody></table></div></div>';
     box.innerHTML=html;
     const b=$('#addLoginsBtn');if(b)b.onclick=()=>addLogins(code);
+    const cg=$('#changeGameBtn');if(cg)cg.onclick=()=>changeGame(code);
+  }
+  async function changeGame(code){
+    const g=$('#changeGame').value;
+    if(!confirm('Dieser Klasse das Spiel „'+gameTitle(g)+'" zuweisen?\n\nDie Login-Namen bleiben erhalten. Der Fortschritt wird pro Spiel getrennt gespeichert – im neuen Spiel starten die Schüler:innen mit leerem Stand (der alte Stand bleibt erhalten, falls du zurückwechselst).'))return;
+    const res=await api('api/teacher/classes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code,game:g})});
+    if(res.status===401){return logout()}
+    if(!res.ok){alert('Fehler beim Zuweisen ('+res.status+').');return}
+    loadClasses();viewClass(code);
   }
 
   $('#loginBtn').onclick=login;
