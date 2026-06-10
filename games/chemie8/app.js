@@ -47,7 +47,7 @@ function setAccountUI(){const a=$('#account');if(!a)return;if(cloudOn&&ident){a.
 function logout(){localStorage.removeItem(IDENT);location.href='/'}
 // Kein eigener Login mehr im Spiel – die Anmeldung erfolgt im Portal (index.html).
 // Ohne gültige ident im localStorage geht es zurück zum Portal.
-async function initCloud(){cloudOn=await cloudAvailable();if(!cloudOn){setAccountUI();return}ident=getIdent();if(!ident||!ident.code||!ident.name){location.href='/';return}const res=await fetchProgress(ident);if(res.status===403){localStorage.removeItem(IDENT);location.href='/';return}hydrate(res);finishCloud();toast('☁️ Angemeldet als '+ident.name)}
+async function initCloud(){if(new URLSearchParams(location.search).get('test')==='1'){cloudOn=false;setAccountUI();toast('🧪 Testmodus – Fortschritt wird nicht gespeichert');return}cloudOn=await cloudAvailable();if(!cloudOn){setAccountUI();return}ident=getIdent();if(!ident||!ident.code||!ident.name){location.href='/';return}const res=await fetchProgress(ident);if(res.status===403){localStorage.removeItem(IDENT);location.href='/';return}hydrate(res);finishCloud();toast('☁️ Angemeldet als '+ident.name)}
 function setSlot(el,id,label){el.className='slot'+(id?' on':'');el.innerHTML=id?`${icon(id)}<span>${name(id)}</span><small>${info(id)}</small>`:`❔<span>${label}</span>`}
 function setResult(id,ok){R.className='slot '+(ok?'ok':'bad');R.innerHTML=id?`${icon(id)}<span>${name(id)}</span>`:'✨<span>Ergebnis</span>'}
 function resetSlots(){setSlot(A,null,'1. Begriff');setSlot(B,null,'2. Begriff');setResult(null,true);render()}
