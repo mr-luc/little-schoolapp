@@ -5,9 +5,10 @@ automatisch das **von der Lehrkraft zugewiesene Spiel** bekommen. Mehrere
 Spiele teilen sich **einen** Login, **einen** KV-Speicher und **einen**
 Lehrer-Bereich.
 
-**Login**: per **Klassencode + Login-Name** (kein Passwort). Jede:r findet den
-eigenen Stand (entdeckte Begriffe, Münzen, XP) auf jedem Gerät wieder – pro
-Spiel getrennt.
+**Login**: per **Login-Name + Passwort** (kein Klassencode nötig). Jede:r findet
+den eigenen Stand (entdeckte Begriffe, Münzen, XP) auf jedem Gerät wieder – pro
+Spiel getrennt. Der Server findet die Klasse über das **global eindeutige
+(Name+Passwort)-Paar**.
 
 Dieses Projekt läuft als **Cloudflare Worker mit statischen Assets**
 (URL-Form `…workers.dev`):
@@ -43,6 +44,8 @@ Dieses Projekt läuft als **Cloudflare Worker mit statischen Assets**
   – Spiel im Schlüssel, damit Stände je Spiel getrennt sind.
 - `cfg:teacherpin` → **Admin-PIN**.
 - `teacher:<username>` → Lehrer-Login `{ username, pin, label, created }`.
+- `look:<name>:<pw>` → `<code>` – Index für den **code-freien Login**: löst das
+  eindeutige (Login-Name + Passwort)-Paar zur Klasse auf.
 
 ## Rollen: Admin & Lehrer
 
@@ -62,10 +65,12 @@ Dieses Projekt läuft als **Cloudflare Worker mit statischen Assets**
 
 - `GET /api/ping` – Erkennung.
 - `GET /api/games` – Liste verfügbarer Spiele `[{id,title}]` (für das Dropdown).
-- `GET|POST /api/progress` – Schüler-Sync, mit `game`- und `pw`-Parameter;
-  Schlüssel inkl. Spiel. Prüft: Klasse existiert + Name in slots (sofern slots)
-  + Passwort (sofern für den Login gesetzt) + Spiel passt zum zugewiesenen
-  Spiel. Die Antwort enthält das `game` der Klasse.
+- `GET|POST /api/progress` – Schüler-Sync, mit `name`/`pw`/`game`-Parametern;
+  Schlüssel inkl. Spiel. **Ohne `code`** löst der GET die Klasse über den
+  `look:`-Index (Name+Passwort) auf und liefert `code` + `game` zurück (so
+  meldet sich das Portal **ohne Klassencode** an). Prüft: Klasse existiert +
+  Name in slots + Passwort + Spiel passt zum zugewiesenen Spiel. Die Spiele
+  senden den (beim Login ermittelten) `code` weiterhin mit.
 - `GET /api/teacher/status`, `POST /api/teacher/setup`, `POST /api/teacher/login`.
 - `GET|POST|DELETE /api/teacher/classes` – beim Anlegen wird zusätzlich `game`
   gesetzt.
@@ -99,13 +104,14 @@ Lehrer-Logins im Bereich „Lehrer-Logins verwalten" an. Danach im Bereich:
   Begriffe, Münzen, XP, „zuletzt aktiv"), **weitere Logins erzeugen**,
   **Passwörter neu erzeugen** und die Logins als **DIN-A4-PDF** exportieren
   (Druck-/„Als PDF speichern"-Ansicht mit Karten zum Austeilen).
-- Schüler:innen melden sich im Portal mit **Klassencode + Login-Name +
-  Passwort** an.
+- Schüler:innen melden sich im Portal nur mit **Login-Name + Passwort** an
+  (kein Klassencode).
 
-**Wichtig:** Schüler:innen melden sich im **Portal** mit **Klassencode +
-zugewiesenem Login-Namen** an und werden automatisch zum zugewiesenen Spiel
-weitergeleitet. Es funktionieren **nur** der angelegte Code **und** die
-erzeugten Namen. (Klassen ohne erzeugte Namen bleiben offen.)
+**Wichtig:** Schüler:innen melden sich im **Portal** mit **Login-Name +
+Passwort** an und werden automatisch zum zugewiesenen Spiel weitergeleitet.
+Login-Name und Passwort sind global eindeutig; der Server findet die Klasse
+darüber. (Für vor diesem Update angelegte Klassen einmal „Passwörter neu
+erzeugen", damit der Index aufgebaut wird.)
 
 ### Lehrer-PIN einrichten (einmalig, direkt auf der Seite)
 
@@ -116,7 +122,7 @@ einfach eine PIN (mind. 4 Zeichen) wählen. Sie wird im KV gespeichert
 
 ## Schüler-Ablauf
 
-1. Portal `index.html` öffnen → Login (Klassencode + Login-Name).
+1. Portal `index.html` öffnen → Login (Login-Name + Passwort).
 2. Das Portal ermittelt das `game` der Klasse → Weiterleitung zu
    `/games/<game>/` (Login bleibt via localStorage gültig, gleiche Origin).
 3. Das Spiel lädt seinen Stand über `/api/progress` mit seinem `game`-Wert.
@@ -137,7 +143,8 @@ npx wrangler dev
 
 ## Datenschutz
 
-- Keine Passwörter/E-Mail – nur Klassencode + (frei wählbarer) Login-Name.
+- Keine E-Mail/Klarnamen nötig – nur pseudonymer Login-Name + einfaches
+  Passwort (Klartext im KV, nur niedrigschwelliger Schutz fürs Klassenzimmer).
 - Empfehlung: **Spitznamen** statt Klarnamen → Stand ist pseudonym.
 - Wer den Klassencode kennt, kann Stände dieser Klasse lesen/überschreiben.
   Vor produktivem Einsatz mit der/dem Datenschutzbeauftragten klären.

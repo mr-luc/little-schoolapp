@@ -109,7 +109,7 @@
           <select id="newGame" title="Zugewiesenes Spiel"></select>
           <button id="addClass">Anlegen</button>
         </div>
-        <p style="color:#5e5043;font-weight:600;font-size:.85rem;margin:8px 0 0">Wähle das <b>Spiel</b> für die Klasse. Die Login-Namen (z. B. „Argon-01") werden automatisch erzeugt und nach dem Anlegen angezeigt.</p>
+        <p style="color:#5e5043;font-weight:600;font-size:.85rem;margin:8px 0 0">Wähle das <b>Spiel</b> für die Klasse. Login-Name und Passwort werden automatisch erzeugt. Schüler:innen melden sich nur mit <b>Login-Name + Passwort</b> an – kein Klassencode nötig.</p>
         <p id="classMsg" class="status"></p>
       </div>
 
@@ -336,6 +336,7 @@
     html+='<div class="controls" style="margin-bottom:10px"><input id="moreCount" type="number" min="1" max="200" placeholder="Anzahl"style="max-width:130px"><button id="addLoginsBtn" class="ghost">+ Logins erzeugen</button></div>';
     html+='<div class="controls" style="margin-bottom:10px"><span class="cnt">Spiel:</span><select id="changeGame">'+GAMES.map(g=>`<option value="${esc(g.id)}"${g.id===game?' selected':''}>${esc(g.title)}</option>`).join('')+'</select><button id="changeGameBtn" class="ghost">Spiel zuweisen</button></div>';
     html+='<div class="controls" style="margin-bottom:10px"><button id="exportPdfBtn" class="ghost">🖨️ Logins als PDF (A4)</button><button id="regenPwBtn" class="ghost">🔑 Passwörter neu erzeugen</button></div>';
+    html+='<p style="color:#5e5043;font-weight:600;font-size:.82rem;margin:0 0 8px">Schüler:innen melden sich nur mit <b>Login-Name + Passwort</b> an (ohne Klassencode). Bei vor diesem Update angelegten Klassen einmal „🔑 Passwörter neu erzeugen", damit der code-freie Login funktioniert.</p>';
     html+='<div class="summary"><div class="stat"><b>'+slots.length+'</b><span>Logins</span></div><div class="stat"><b>'+active+'</b><span>aktiv</span></div><div class="stat"><b>'+avg+'</b><span>Ø XP (aktiv)</span></div></div>';
     if(!slots.length && !students.length){
       html+='<div class="empty">Noch keine Logins. Erzeuge oben welche – Name und Passwort erscheinen dann hier.</div></div>';
@@ -375,7 +376,6 @@
       '<div class="lc-top">🏫 Little-SchoolApp</div>'+
       '<div class="lc-row"><span>Adresse</span><b>'+esc(origin)+'</b></div>'+
       '<div class="lc-row"><span>Spiel</span><b>'+esc(title)+'</b></div>'+
-      '<div class="lc-row"><span>Klassencode</span><b>'+esc(code)+'</b></div>'+
       '<div class="lc-row"><span>Login-Name</span><b>'+esc(n)+'</b></div>'+
       '<div class="lc-row"><span>Passwort</span><b>'+esc(pw[n.toLowerCase()]||'—')+'</b></div>'+
     '</div>').join('');
