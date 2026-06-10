@@ -313,9 +313,10 @@
     loadClasses();
   }
 
-  function rowFor(n,name,s){
-    if(!s)return '<tr><td class="rank">'+n+'.</td><td class="name">'+esc(name)+'</td><td colspan="5" class="ago">noch nicht gespielt</td></tr>';
-    return '<tr><td class="rank">'+n+'.</td><td class="name">'+esc(name)+'</td>'+
+  function rowFor(n,name,pw,s){
+    const pwc='<td class="num">'+(pw?esc(pw):'—')+'</td>';
+    if(!s)return '<tr><td class="rank">'+n+'.</td><td class="name">'+esc(name)+'</td>'+pwc+'<td colspan="5" class="ago">noch nicht gespielt</td></tr>';
+    return '<tr><td class="rank">'+n+'.</td><td class="name">'+esc(name)+'</td>'+pwc+
       '<td><span class="lvl">Lvl '+levelOf(s.xp||0)+'</span></td>'+
       '<td class="num">'+(s.entdeckt||0)+'</td>'+
       '<td class="num">🪙 '+(s.muenzen||0)+'</td>'+
@@ -328,29 +329,77 @@
     const res=await api('api/class?code='+encodeURIComponent(code));
     if(res.status===401){return logout()}
     if(!res.ok){box.innerHTML='<div class="panel"><div class="empty">Fehler ('+res.status+').</div></div>';return}
-    const slots=res.data.slots||[], students=res.data.students||[], game=res.data.game;
+    const slots=res.data.slots||[], students=res.data.students||[], game=res.data.game, pw=res.data.pw||{};
     const map={};students.forEach(s=>{map[(s.name||'').toLowerCase()]=s});
     const active=students.length, avg=active?Math.round(students.reduce((a,s)=>a+(s.xp||0),0)/active):0;
     let html='<div class="panel"><h2>👥 Klasse: '+esc(code)+' <span class="gametag">'+esc(gameTitle(game))+'</span></h2>';
     html+='<div class="controls" style="margin-bottom:10px"><input id="moreCount" type="number" min="1" max="200" placeholder="Anzahl"style="max-width:130px"><button id="addLoginsBtn" class="ghost">+ Logins erzeugen</button></div>';
     html+='<div class="controls" style="margin-bottom:10px"><span class="cnt">Spiel:</span><select id="changeGame">'+GAMES.map(g=>`<option value="${esc(g.id)}"${g.id===game?' selected':''}>${esc(g.title)}</option>`).join('')+'</select><button id="changeGameBtn" class="ghost">Spiel zuweisen</button></div>';
+    html+='<div class="controls" style="margin-bottom:10px"><button id="exportPdfBtn" class="ghost">🖨️ Logins als PDF (A4)</button><button id="regenPwBtn" class="ghost">🔑 Passwörter neu erzeugen</button></div>';
     html+='<div class="summary"><div class="stat"><b>'+slots.length+'</b><span>Logins</span></div><div class="stat"><b>'+active+'</b><span>aktiv</span></div><div class="stat"><b>'+avg+'</b><span>Ø XP (aktiv)</span></div></div>';
     if(!slots.length && !students.length){
-      html+='<div class="empty">Noch keine Logins. Erzeuge oben welche – die Namen erscheinen dann hier.</div></div>';
-      box.innerHTML=html;const b=$('#addLoginsBtn');if(b)b.onclick=()=>addLogins(code);const cg0=$('#changeGameBtn');if(cg0)cg0.onclick=()=>changeGame(code);return;
+      html+='<div class="empty">Noch keine Logins. Erzeuge oben welche – Name und Passwort erscheinen dann hier.</div></div>';
+      box.innerHTML=html;wireDetail(code);return;
     }
     const slotSet={};slots.forEach(n=>slotSet[n.toLowerCase()]=1);
     const rows=[];
     if(slots.length){
-      slots.forEach((name,i)=>rows.push(rowFor(i+1,name,map[name.toLowerCase()])));
-      students.filter(s=>!slotSet[(s.name||'').toLowerCase()]).forEach((s,i)=>rows.push(rowFor(slots.length+i+1,s.name,s)));
+      slots.forEach((name,i)=>rows.push(rowFor(i+1,name,pw[name.toLowerCase()],map[name.toLowerCase()])));
+      students.filter(s=>!slotSet[(s.name||'').toLowerCase()]).forEach((s,i)=>rows.push(rowFor(slots.length+i+1,s.name,pw[(s.name||'').toLowerCase()],s)));
     }else{
-      students.slice().sort((a,b)=>b.xp-a.xp).forEach((s,i)=>rows.push(rowFor(i+1,s.name,s)));
+      students.slice().sort((a,b)=>b.xp-a.xp).forEach((s,i)=>rows.push(rowFor(i+1,s.name,pw[(s.name||'').toLowerCase()],s)));
     }
-    html+='<div class="tablewrap"><table><thead><tr><th>#</th><th>Login-Name</th><th>Level</th><th>Begriffe</th><th>Münzen</th><th>XP</th><th>Zuletzt aktiv</th></tr></thead><tbody>'+rows.join('')+'</tbody></table></div></div>';
-    box.innerHTML=html;
+    html+='<div class="tablewrap"><table><thead><tr><th>#</th><th>Login-Name</th><th>Passwort</th><th>Level</th><th>Begriffe</th><th>Münzen</th><th>XP</th><th>Zuletzt aktiv</th></tr></thead><tbody>'+rows.join('')+'</tbody></table></div></div>';
+    box.innerHTML=html;wireDetail(code);
+  }
+  function wireDetail(code){
     const b=$('#addLoginsBtn');if(b)b.onclick=()=>addLogins(code);
     const cg=$('#changeGameBtn');if(cg)cg.onclick=()=>changeGame(code);
+    const ep=$('#exportPdfBtn');if(ep)ep.onclick=()=>exportPdf(code);
+    const rp=$('#regenPwBtn');if(rp)rp.onclick=()=>regenPw(code);
+  }
+  async function regenPw(code){
+    if(!confirm('Für ALLE Logins dieser Klasse neue Passwörter erzeugen?\n\nDie alten Passwörter gelten dann nicht mehr – die Schüler:innen brauchen die neuen. Spielstände bleiben erhalten.'))return;
+    const res=await api('api/teacher/classes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code,regenpw:true})});
+    if(res.status===401){return logout()}
+    if(!res.ok){alert('Fehler ('+res.status+').');return}
+    viewClass(code);
+  }
+  async function exportPdf(code){
+    const res=await api('api/class?code='+encodeURIComponent(code));
+    if(res.status===401){return logout()}
+    if(!res.ok){alert('Fehler ('+res.status+').');return}
+    const slots=res.data.slots||[], pw=res.data.pw||{}, title=gameTitle(res.data.game), origin=location.origin;
+    if(!slots.length){alert('Diese Klasse hat noch keine Logins zum Exportieren.');return}
+    const cards=slots.map(n=>'<div class="loginCard">'+
+      '<div class="lc-top">🏫 Little-schoolapp</div>'+
+      '<div class="lc-row"><span>Adresse</span><b>'+esc(origin)+'</b></div>'+
+      '<div class="lc-row"><span>Spiel</span><b>'+esc(title)+'</b></div>'+
+      '<div class="lc-row"><span>Klassencode</span><b>'+esc(code)+'</b></div>'+
+      '<div class="lc-row"><span>Login-Name</span><b>'+esc(n)+'</b></div>'+
+      '<div class="lc-row"><span>Passwort</span><b>'+esc(pw[n.toLowerCase()]||'—')+'</b></div>'+
+    '</div>').join('');
+    const doc='<!doctype html><html lang="de"><head><meta charset="utf-8"><title>Logins '+esc(code)+'</title><style>'+
+      '@page{size:A4;margin:12mm}*{box-sizing:border-box}'+
+      'body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#21160f;margin:0}'+
+      'h1{font-size:16pt;margin:0 0 1mm}.sub{color:#5e5043;font-size:10pt;margin:0 0 5mm}'+
+      '.grid{display:grid;grid-template-columns:1fr 1fr;gap:6mm;margin-top:5mm}'+
+      '.loginCard{border:1.5px dashed #b9a890;border-radius:4mm;padding:5mm;page-break-inside:avoid}'+
+      '.lc-top{font-weight:800;font-size:11pt;margin-bottom:3mm}'+
+      '.lc-row{display:flex;justify-content:space-between;gap:4mm;font-size:11pt;padding:1.3mm 0;border-bottom:1px solid #eee}'+
+      '.lc-row span{color:#5e5043}.lc-row b{font-family:ui-monospace,Menlo,Consolas,monospace}'+
+      '.noprint{margin:4mm 0;padding:8px 14px;font:inherit;font-weight:700;border:0;border-radius:8px;background:#2364d2;color:#fff;cursor:pointer}'+
+      '@media print{.noprint{display:none}}'+
+      '</style></head><body>'+
+      '<h1>🏫 Little-schoolapp · Logins</h1>'+
+      '<p class="sub">Klasse: '+esc(code)+' · Spiel: '+esc(title)+' · '+slots.length+' Logins</p>'+
+      '<button class="noprint" onclick="window.print()">🖨️ Drucken / Als PDF speichern</button>'+
+      '<div class="grid">'+cards+'</div>'+
+      '<scr'+'ipt>window.onload=function(){setTimeout(function(){window.print()},350)}</scr'+'ipt>'+
+      '</body></html>';
+    const w=window.open('','_blank');
+    if(!w){alert('Bitte Pop-ups für diese Seite erlauben, um den PDF-Export zu öffnen.');return}
+    w.document.open();w.document.write(doc);w.document.close();
   }
   async function changeGame(code){
     const g=$('#changeGame').value;

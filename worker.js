@@ -100,6 +100,17 @@ function nameAllowed(clsRaw, name) {
   } catch (e) { return true; }
 }
 
+// Einfache, gut merkbare Passwörter (Wort + Ziffer), z. B. "apfel7".
+const PWWORDS = ['apfel', 'banane', 'katze', 'hund', 'baum', 'blume', 'stern', 'mond', 'sonne', 'wolke', 'fisch', 'vogel', 'tiger', 'loewe', 'hase', 'igel', 'biene', 'feder', 'blatt', 'berg', 'fluss', 'insel', 'keks', 'honig', 'kirsche', 'pilz', 'nuss', 'beere', 'wald', 'wiese'];
+const genPw = () => PWWORDS[Math.floor(Math.random() * PWWORDS.length)] + Math.floor(Math.random() * 10);
+// Passwort prüfen: nur erzwingen, wenn für diesen Login eines hinterlegt ist.
+function pwOk(cls, name, pw) {
+  if (!cls || !cls.pw || typeof cls.pw !== 'object') return true;
+  const want = cls.pw[norm(name)];
+  if (!want) return true;
+  return String(pw || '') === String(want);
+}
+
 async function handleApi(request, env, url) {
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
   const p = url.pathname;
@@ -141,6 +152,7 @@ async function handleApi(request, env, url) {
       if (!clsRaw) return json({ error: 'unknown-class' }, 403);
       if (!nameAllowed(clsRaw, name)) return json({ error: 'unknown-name' }, 403);
       const cls = JSON.parse(clsRaw);
+      if (!pwOk(cls, name, url.searchParams.get('pw'))) return json({ error: 'bad-pin' }, 403);
       const assigned = classGame(cls);
       // Wird ein Spiel mitgeschickt, muss es zum zugewiesenen Spiel passen.
       if (game && norm(game) !== assigned) return json({ error: 'wrong-game', game: assigned }, 403);
@@ -150,12 +162,13 @@ async function handleApi(request, env, url) {
     if (request.method === 'POST') {
       let body;
       try { body = await request.json(); } catch (e) { return json({ error: 'bad-json' }, 400); }
-      const { code, name, game, state } = body || {};
+      const { code, name, game, pw, state } = body || {};
       if (!valid(code, name)) return json({ error: 'bad-params' }, 400);
       const clsRaw = await env.PROGRESS.get(classKey(code));
       if (!clsRaw) return json({ error: 'unknown-class' }, 403);
       if (!nameAllowed(clsRaw, name)) return json({ error: 'unknown-name' }, 403);
       const cls = JSON.parse(clsRaw);
+      if (!pwOk(cls, name, pw)) return json({ error: 'bad-pin' }, 403);
       const assigned = classGame(cls);
       if (game && norm(game) !== assigned) return json({ error: 'wrong-game', game: assigned }, 403);
       const clean = sanitize(state);
@@ -258,9 +271,16 @@ async function handleApi(request, env, url) {
         const reqGame = norm(body && body.game);
         const game = gameAllowed(reqGame) ? reqGame : classGame(cur || {});
         let slots = (cur && Array.isArray(cur.slots)) ? cur.slots.slice() : [];
+        let pw = (cur && cur.pw && typeof cur.pw === 'object') ? Object.assign({}, cur.pw) : {};
         if (slots.length + count > 500) return json({ error: 'too-many' }, 400);
-        if (count > 0) slots = slots.concat(genSlots(slots, count));
-        const cls = { code, label, created, slots, game, owner };
+        if (count > 0) {
+          const added = genSlots(slots, count);
+          added.forEach((n) => { pw[norm(n)] = genPw(); }); // neue Logins bekommen ein Passwort
+          slots = slots.concat(added);
+        }
+        // Passwörter (neu) erzeugen – für alle aktuellen Logins (z. B. Altklassen).
+        if (body && body.regenpw) { pw = {}; slots.forEach((n) => { pw[norm(n)] = genPw(); }); }
+        const cls = { code, label, created, slots, game, owner, pw };
         await env.PROGRESS.put(classKey(code), JSON.stringify(cls));
         return json({ ok: true, class: cls });
       }
@@ -303,7 +323,7 @@ async function handleApi(request, env, url) {
         });
       }
       students.sort((a, b) => b.xp - a.xp);
-      return json({ code, game, owner: cls && cls.owner || '', slots, anzahl: students.length, students });
+      return json({ code, game, owner: cls && cls.owner || '', slots, pw: cls && cls.pw || {}, anzahl: students.length, students });
     }
   }
 
