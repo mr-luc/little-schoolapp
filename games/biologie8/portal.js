@@ -38,7 +38,8 @@
     var deck = arr.filter(function (x) { return start.indexOf(x) < 0; });
     var coins = Number(localStorage.getItem(COIN_KEY));
     if (!isFinite(coins)) coins = 5;
-    return { deck: deck, coins: coins, xp: deck.length };
+    // XP analog zu chemie8 (~12 pro Entdeckung), damit das Lehrer-Level passt.
+    return { deck: deck, coins: coins, xp: deck.length * 12 };
   }
   function writeState(st) {
     if (st && Array.isArray(st.deck)) origSet(S_KEY, JSON.stringify(st.deck));
@@ -73,26 +74,27 @@
   if (sessionStorage.getItem('bio8-hydrated-for') !== who) {
     syncing = true;            // Schreibvorgänge der Hydration nicht zurückpushen
     hide();
+    var done = function () { syncing = false; sessionStorage.setItem('bio8-hydrated-for', who); show(); };
     fetch('/api/progress?code=' + encodeURIComponent(ident.code) + '&name=' + encodeURIComponent(ident.name) + '&game=' + encodeURIComponent(GAME) + '&pw=' + encodeURIComponent(ident.pw || ''))
       .then(function (r) {
         if (r.status === 403) { location.href = '/'; return null; } // falsches Spiel/Klasse → Portal
-        return r.json().catch(function () { return null; });
+        var ok = r.ok;
+        return r.json().then(function (j) { return { ok: ok, j: j }; }, function () { return { ok: ok, j: null }; });
       })
-      .then(function (j) {
-        if (j === null) return;
-        if (j.state && Array.isArray(j.state.deck)) {
-          writeState(j.state);
-        } else {                // neuer Account: lokal frisch starten
-          localStorage.removeItem(S_KEY);
-          localStorage.removeItem(COIN_KEY);
+      .then(function (res) {
+        if (res === null) return; // 403 → navigiert bereits zum Portal
+        // Nur eine OK-Antwort mit dem Feld "state" ist autoritativ. Server-Fehler
+        // (z. B. 500/kv-not-bound) dürfen den lokalen Stand NICHT löschen.
+        if (res.ok && res.j && ('state' in res.j)) {
+          if (res.j.state && Array.isArray(res.j.state.deck)) writeState(res.j.state);
+          else { localStorage.removeItem(S_KEY); localStorage.removeItem(COIN_KEY); } // neuer Account
+          sessionStorage.setItem('bio8-hydrated-for', who);
+          location.reload();
+          return;
         }
-        sessionStorage.setItem('bio8-hydrated-for', who);
-        location.reload();
+        done(); // Server-Fehler/unlesbar → lokal weiterspielen
       })
-      .catch(function () {       // offline: lokal weiterspielen
-        sessionStorage.setItem('bio8-hydrated-for', who);
-        show();
-      });
+      .catch(done); // offline → lokal weiterspielen
   }
 
   // 4) Konto-Anzeige + Abmelden (zurück zum Portal).
@@ -103,7 +105,6 @@
     if (!el) {
       el = document.createElement('span');
       el.id = 'accountPill';
-      el.setAttribute('id', 'accountPill');
       el.style.cursor = 'pointer';
       el.style.marginLeft = '8px';
       stats.appendChild(el);

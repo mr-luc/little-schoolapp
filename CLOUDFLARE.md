@@ -38,8 +38,8 @@ Dieses Projekt läuft als **Cloudflare Worker mit statischen Assets**
 
 - `class:<code>` → `{ code, label, created, slots:[namen], game, owner, pw }`
   – `game` = zugewiesenes Spiel; `owner` = Benutzername der anlegenden Lehrkraft
-  (oder `admin`); `pw` = Map `Login-Name → einfaches Passwort` (z. B. `apfel7`),
-  beim Erzeugen der Logins automatisch vergeben.
+  (oder `admin`); `pw` = Map `Login-Name → einfaches Passwort` (z. B. `apfel73`,
+  case-insensitiv), beim Erzeugen der Logins automatisch vergeben.
 - `st:<code>:<name>:<game>` → Spielstand `{ deck, coins, xp, name, game, updated }`
   – Spiel im Schlüssel, damit Stände je Spiel getrennt sind.
 - `cfg:teacherpin` → **Admin-PIN**.
@@ -99,7 +99,7 @@ Lehrer-Logins im Bereich „Lehrer-Logins verwalten" an. Danach im Bereich:
 
 - **Klasse anlegen:** Klassencode + optionale Bezeichnung + **Anzahl Schüler** +
   **Spiel (Dropdown)**. **Login-Name und einfaches Passwort werden automatisch
-  erzeugt** (z. B. `Argon-01` / `apfel7`) und in der Klassenansicht angezeigt.
+  erzeugt** (z. B. `Argon-01` / `apfel73`) und in der Klassenansicht angezeigt.
 - Pro Klasse die **Login-Liste mit Passwort und Status** ansehen (Level,
   Begriffe, Münzen, XP, „zuletzt aktiv"), **weitere Logins erzeugen**,
   **Passwörter neu erzeugen** und die Logins als **DIN-A4-PDF** exportieren
