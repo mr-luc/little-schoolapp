@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Little-schoolapp · Lehrer-Bereich</title>
+  <title>Little-SchoolApp · Lehrer-Bereich</title>
   <style>
     :root{--ink:#21160f;--muted:#5e5043;--line:#efe1d2;--bg:#fbf4ea;--orange:#ea580c;--blue:#2364d2;--green:#16a34a;--purple:#7c3aed;--red:#d94848}
     *{box-sizing:border-box}
@@ -57,7 +57,7 @@
 </head>
 <body>
   <header>
-    <div><h1>🏫 Little-schoolapp · Lehrer-Bereich</h1><p>Klassencodes verwalten, Spiel zuweisen und Fortschritt einsehen.</p></div>
+    <div><h1>🏫 Little-SchoolApp · Lehrer-Bereich</h1><p>Klassencodes verwalten, Spiel zuweisen und Fortschritt einsehen.</p></div>
     <button id="logout" class="ghost" hidden>Abmelden</button>
   </header>
 
@@ -372,7 +372,7 @@
     const slots=res.data.slots||[], pw=res.data.pw||{}, title=gameTitle(res.data.game), origin=location.origin;
     if(!slots.length){alert('Diese Klasse hat noch keine Logins zum Exportieren.');return}
     const cards=slots.map(n=>'<div class="loginCard">'+
-      '<div class="lc-top">🏫 Little-schoolapp</div>'+
+      '<div class="lc-top">🏫 Little-SchoolApp</div>'+
       '<div class="lc-row"><span>Adresse</span><b>'+esc(origin)+'</b></div>'+
       '<div class="lc-row"><span>Spiel</span><b>'+esc(title)+'</b></div>'+
       '<div class="lc-row"><span>Klassencode</span><b>'+esc(code)+'</b></div>'+
@@ -391,7 +391,7 @@
       '.noprint{margin:4mm 0;padding:8px 14px;font:inherit;font-weight:700;border:0;border-radius:8px;background:#2364d2;color:#fff;cursor:pointer}'+
       '@media print{.noprint{display:none}}'+
       '</style></head><body>'+
-      '<h1>🏫 Little-schoolapp · Logins</h1>'+
+      '<h1>🏫 Little-SchoolApp · Logins</h1>'+
       '<p class="sub">Klasse: '+esc(code)+' · Spiel: '+esc(title)+' · '+slots.length+' Logins</p>'+
       '<button class="noprint" onclick="window.print()">🖨️ Drucken / Als PDF speichern</button>'+
       '<div class="grid">'+cards+'</div>'+

@@ -1,4 +1,4 @@
-# Little-schoolapp
+# Little-SchoolApp
 
 Zentrales **Multi-Spiel-Portal** für die Schule: Schüler:innen melden sich
 **einmal** an (Klassencode + Login-Name) und bekommen automatisch das

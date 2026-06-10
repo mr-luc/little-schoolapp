@@ -1,4 +1,4 @@
-# Portal „Little-schoolapp" – Login, Spiel-Zuweisung & Spielstand-Sync (Cloudflare Worker)
+# Portal „Little-SchoolApp" – Login, Spiel-Zuweisung & Spielstand-Sync (Cloudflare Worker)
 
 Ein zentrales Portal, in dem sich Schüler:innen **einmal** anmelden und
 automatisch das **von der Lehrkraft zugewiesene Spiel** bekommen. Mehrere
