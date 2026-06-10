@@ -114,6 +114,12 @@
       </div>
 
       <div class="panel">
+        <h2>🎮 Spiele testen</h2>
+        <div id="testGames" class="controls"></div>
+        <p style="color:#5e5043;font-weight:600;font-size:.85rem;margin:8px 0 0">Öffnet das Spiel in einem neuen Tab im <b>Testmodus</b> – ohne Anmeldung und ohne Speichern (kein Eintrag im Fortschritt).</p>
+      </div>
+
+      <div class="panel">
         <h2>📋 Meine Klassen</h2>
         <div id="classList"><div class="empty">Lade …</div></div>
       </div>
@@ -147,6 +153,11 @@
     try{const r=await fetch('api/games');const d=await r.json();GAMES=Array.isArray(d.games)?d.games:[]}catch(e){GAMES=[]}
     if(!GAMES.length)GAMES=[{id:'chemie8',title:'Little Chemie 8'}];
     const sel=$('#newGame');sel.innerHTML=GAMES.map(g=>`<option value="${esc(g.id)}">${esc(g.title)}</option>`).join('');
+    const test=$('#testGames');
+    if(test){
+      test.innerHTML=GAMES.map(g=>`<button class="ghost" data-test="${esc(g.id)}">▶ ${esc(g.title)}</button>`).join('');
+      test.querySelectorAll('[data-test]').forEach(b=>b.onclick=()=>window.open('/games/'+encodeURIComponent(b.dataset.test)+'/?test=1','_blank','noopener'));
+    }
   }
 
   function hideAll(){$('#loginView').hidden=true;$('#setupView').hidden=true;$('#dashView').hidden=true;$('#logout').hidden=true;}

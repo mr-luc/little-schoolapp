@@ -5,6 +5,19 @@
 //   geräteübergreifend gilt.
 // Wird als ERSTES Skript geladen (vor script2.js), damit der Sync greift.
 (function () {
+  // Testmodus (Lehrer-Bereich): ohne Anmeldung, ohne Sync – nur lokal spielen.
+  if (new URLSearchParams(location.search).get('test') === '1') {
+    function note() {
+      var d = document.createElement('div');
+      d.textContent = '🧪 Testmodus – Fortschritt wird nicht gespeichert';
+      d.style.cssText = 'position:fixed;bottom:8px;right:8px;background:#21160f;color:#fff;padding:6px 10px;border-radius:10px;font:600 12px system-ui;z-index:9999;opacity:.92';
+      document.body.appendChild(d);
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', note);
+    else note();
+    return;
+  }
+
   var IDENT = 'schoolapp-ident-v1', GAME = 'biologie8';
   var S_KEY = 'little-bio8-progress-v5', COIN_KEY = 'little-bio8-coins-v1';
 
