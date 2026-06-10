@@ -1,0 +1,14 @@
+.coins-box{
+  padding:6px 10px;
+  border-radius:999px;
+  background:linear-gradient(135deg,#f5c542,#f59f00);
+  color:#3a2500;
+  font-weight:1000;
+  font-size:.98rem;
+  box-shadow:0 6px 14px rgba(150,100,0,.18);
+}
+
+#hint{
+  background:linear-gradient(135deg,#f5c542,#f59f00);
+  color:#3a2500;
+}

@@ -1,83 +1,45 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Little Biologie 8</title>
-  <link rel="stylesheet" href="style.css?v=1">
-  <link rel="stylesheet" href="effects.css?v=1">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Bio-Alchemie – Klasse 8</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="sticky-play.css?v=1">
+<link rel="stylesheet" href="coins.css?v=1">
+<link rel="stylesheet" href="mini-game.css?v=1">
+<link rel="stylesheet" href="tabs.css?v=1">
+<link rel="stylesheet" href="mission.css?v=1">
+<link rel="stylesheet" href="galaxy-game.css?v=1">
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand">
-      <h1>🧬 Little Biologie 8</h1>
-      <p>Zelle → Photosynthese → Mensch → Ökosystem → Vielfalt</p>
+<header class="topbar">
+  <div><h1>🧬 Bio-Alchemie</h1><p>Klasse 8 · Baustein → Struktur → System → Funktion</p></div>
+  <div class="stats"><strong id="counter">0 / 0</strong><span id="badge">Starter</span></div>
+</header>
+<main>
+  <section class="play">
+    <div class="combo">
+      <div class="slot" id="a">❔<span>1. Begriff</span></div><b>+</b>
+      <div class="slot" id="b">❔<span>2. Begriff</span></div><b>=</b>
+      <div class="slot result" id="r">✨<span>Ergebnis</span></div>
     </div>
-    <div class="stats">
-      <strong id="count" class="pill">0 / 0</strong>
-      <span id="level" class="pill level">⭐ Lvl 1</span>
-      <span id="combo" class="pill combo" hidden></span>
-      <span id="badge" class="pill badge">Starter</span>
-      <span id="coins" class="pill coins">🪙 5</span>
-      <span id="account" class="pill account" hidden></span>
-    </div>
-  </header>
-  <div class="progress" title="Erfahrung bis zum nächsten Level"><span id="progressBar"></span></div>
-
-  <main class="app">
-    <aside class="bench">
-      <h2>🧰 Werkbank</h2>
-      <div class="combo">
-        <div id="slotA" class="slot">❔<span>1. Begriff</span></div>
-        <b>+</b>
-        <div id="slotB" class="slot">❔<span>2. Begriff</span></div>
-        <b>=</b>
-        <div id="slotR" class="slot">✨<span>Ergebnis</span></div>
-      </div>
-      <div id="msg" class="msg">Tippe zwei Begriffe an. Passende Kombinationen schalten neue Biologie-Begriffe frei.</div>
-      <div class="controls">
-        <button id="hint">💡 Tipp kaufen (3🪙)</button>
-        <button id="quiz">🎮 Bio-Blitz</button>
-        <button id="reset">🔄 Neustart</button>
-      </div>
-    </aside>
-
-    <section class="content">
-      <input id="search" placeholder="🔍  Begriff suchen …">
-      <section id="grid" class="grid"></section>
-    </section>
-
-    <aside class="missions-rail">
-      <h2>🎯 Missionen</h2>
-      <div id="missions" class="missiongrid"></div>
-      <p id="labnote" class="labnote" hidden></p>
-    </aside>
-  </main>
-
-  <div id="pop" class="modal">
-    <div class="box">
-      <button class="close" data-close>×</button>
-      <div id="pe" class="big">🧬</div>
-      <h2 id="pt" class="unlockTitle">Neu entdeckt</h2>
-      <p id="pf" class="formula"></p>
-      <p id="pchem" class="chemformula" hidden></p>
-      <p id="px" class="explain"></p>
-      <p id="pwhy" class="why" hidden></p>
-    </div>
-  </div>
-
-  <div id="game" class="modal">
-    <div class="box">
-      <button class="close" data-close>×</button>
-      <h2>🧬 Bio-Blitz</h2>
-      <div id="gs" class="miniStatus"></div>
-      <div id="gq"></div>
-      <div id="ga" class="answers"></div>
-    </div>
-  </div>
-
-  <footer class="footer">Little Biologie 8 · Entdecken, verbinden, verstehen</footer>
-  <script src="app.js?v=1"></script>
-  <script src="effects.js?v=1"></script>
+    <div id="msg" class="msg">Tippe zwei Begriffe an. Wenn sie fachlich zusammenpassen, entsteht ein neuer Biologie-Begriff.</div>
+    <div class="controls"><input id="search" placeholder="Begriff suchen …"><button id="hint">💡 Tipp</button><button id="reset">🔄 Neustart</button></div>
+  </section>
+  <section class="mission-panel">
+    <h2>🎯 Missionen</h2>
+    <div id="missionList" class="mission-list"></div>
+  </section>
+  <section id="grid" class="grid"></section>
+</main>
+<div id="pop" class="pop"><div class="popcard"><button id="close">×</button><div id="pe">🧬</div><h2 id="pt">Neu</h2><p id="pf"></p><p id="px"></p></div></div>
+<footer>Bio-Alchemie · Lernen durch fachliche Zusammenhänge</footer>
+<script src="portal.js?v=1"></script>
+<script src="script2.js?v=2"></script>
+<script src="mission-upgrade.js?v=1"></script>
+<script src="coins.js?v=2"></script>
+<script src="mini-game.js?v=2"></script>
+<script src="galaxy-game.js?v=1"></script>
 </body>
 </html>

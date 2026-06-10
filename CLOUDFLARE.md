@@ -29,7 +29,7 @@ Dieses Projekt läuft als **Cloudflare Worker mit statischen Assets**
 ├── .assetsignore
 ├── games/
 │   ├── chemie8/            # das Spiel „Little Chemie 8" (index/app/style/effects)
-│   └── biologie8/          # das Spiel „Little Biologie 8"
+│   └── biologie8/          # das Spiel „Bio-Alchemie" (Biologie 8)
 └── CLOUDFLARE.md
 ```
 

@@ -9,6 +9,6 @@ Login, einen KV-Speicher und einen Lehrer-Bereich.
 - `lehrer.html` – Lehrer-Bereich: Klassen verwalten, Spiel zuweisen, Fortschritt.
 - `worker.js` / `wrangler.toml` – Cloudflare Worker (`/api/*` + statische Assets).
 - `games/chemie8/` – das Spiel „Little Chemie 8".
-- `games/biologie8/` – das Spiel „Little Biologie 8".
+- `games/biologie8/` – das Spiel „Bio-Alchemie" (Biologie 8).
 
 Details zu Aufbau, Endpunkten und Betrieb: siehe [`CLOUDFLARE.md`](CLOUDFLARE.md).
