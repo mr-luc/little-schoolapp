@@ -5,7 +5,7 @@
   z-index:50;
   place-items:center;
   padding:18px;
-  background:rgba(33,22,15,.42);
+  background:rgba(17,45,28,.42);
   backdrop-filter:blur(8px);
 }
 .mini-modal.show{display:grid}
@@ -14,9 +14,9 @@
   width:min(520px,96vw);
   padding:22px;
   border-radius:28px;
-  background:linear-gradient(180deg,#fff,#fdf6ec);
-  box-shadow:0 24px 60px rgba(33,22,15,.32);
-  border:1px solid rgba(234,88,12,.20);
+  background:linear-gradient(180deg,#fff,#f0fbf4);
+  box-shadow:0 24px 60px rgba(10,42,24,.32);
+  border:1px solid rgba(31,143,85,.22);
 }
 .mini-close{
   position:absolute;
@@ -26,7 +26,7 @@
   height:36px;
   padding:0;
   border-radius:50%;
-  background:#f3ece3;
+  background:#e9f4ee;
   color:var(--t);
   box-shadow:none;
   font-size:1.35rem;
@@ -57,13 +57,13 @@
   background:#fff;
   color:var(--t);
   border:1px solid var(--bd);
-  box-shadow:0 6px 14px rgba(80,43,12,.08);
+  box-shadow:0 6px 14px rgba(21,70,45,.08);
 }
 .mini-answer.right{background:#dff7e6;border-color:#16a34a;color:#135d38}
 .mini-answer.wrong{background:#fde2e2;border-color:#d94848;color:#7b2020}
 .mini-answer:disabled{opacity:1}
 #miniGameButton{
-  background:linear-gradient(135deg,#ea580c,#2364d2);
+  background:linear-gradient(135deg,#1f8f55,#277da1);
   color:#fff;
 }
 @media(max-width:760px){
