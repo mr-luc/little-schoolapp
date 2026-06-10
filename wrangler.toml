@@ -1,4 +1,4 @@
-# Cloudflare Worker (mit statischen Assets) – Konfiguration für das Portal „Little-schoolapp"
+# Cloudflare Worker (mit statischen Assets) – Konfiguration für das Portal „Little-SchoolApp"
 # Der Projektname muss zum Worker passen (laut URL: little-schoolapp.<subdomain>.workers.dev).
 name = "little-schoolapp"
 main = "worker.js"

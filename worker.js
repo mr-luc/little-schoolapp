@@ -1,4 +1,4 @@
-// Cloudflare Worker (mit statischen Assets) für das Portal „Little-schoolapp"
+// Cloudflare Worker (mit statischen Assets) für das Portal „Little-SchoolApp"
 // - /api/ping                  Erkennung
 // - /api/games                 Liste verfügbarer Spiele (für das Dropdown)
 // - /api/progress              Schüler-Sync (pro Klasse + zugewiesenem Spiel)
