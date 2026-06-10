@@ -15,7 +15,7 @@
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET,POST,DELETE,OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type,X-Teacher-Pin',
+  'Access-Control-Allow-Headers': 'Content-Type,X-Teacher-Pin,X-Teacher-User',
 };
 
 // Verfügbare Spiele. Quelle für /api/games und das Dropdown im Lehrer-Bereich.
@@ -100,19 +100,22 @@ function nameAllowed(clsRaw, name) {
   } catch (e) { return true; }
 }
 
-// Einfache, gut merkbare Passwörter (Wort + Ziffer), z. B. "apfel7".
+// Einfache, gut merkbare Passwörter (Wort + zwei Ziffern), z. B. "apfel73".
+// Zwei Ziffern → ~3000 Kombinationen pro Name (Brute-Force-Schutz fürs Klassenzimmer).
 const PWWORDS = ['apfel', 'banane', 'katze', 'hund', 'baum', 'blume', 'stern', 'mond', 'sonne', 'wolke', 'fisch', 'vogel', 'tiger', 'loewe', 'hase', 'igel', 'biene', 'feder', 'blatt', 'berg', 'fluss', 'insel', 'keks', 'honig', 'kirsche', 'pilz', 'nuss', 'beere', 'wald', 'wiese'];
-const genPw = (extra) => PWWORDS[Math.floor(Math.random() * PWWORDS.length)] + Math.floor(Math.random() * 10) + (extra ? Math.floor(Math.random() * 10) : '');
+const genPw = (suffix) => PWWORDS[Math.floor(Math.random() * PWWORDS.length)] + String(10 + Math.floor(Math.random() * 90)) + (suffix || '');
+// Passwörter werden case-insensitiv behandelt (Handy-Autokorrektur großschreibt gern).
+const normPw = (pw) => String(pw || '').trim().toLowerCase();
 // Passwort prüfen: nur erzwingen, wenn für diesen Login eines hinterlegt ist.
 function pwOk(cls, name, pw) {
   if (!cls || !cls.pw || typeof cls.pw !== 'object') return true;
   const want = cls.pw[norm(name)];
   if (!want) return true;
-  return String(pw || '') === String(want);
+  return normPw(pw) === normPw(want);
 }
 
 // Index für code-freien Login: (Login-Name + Passwort) → Klassencode.
-const lookKey = (name, pw) => `look:${encodeURIComponent(norm(name))}:${encodeURIComponent(String(pw || ''))}`;
+const lookKey = (name, pw) => `look:${encodeURIComponent(norm(name))}:${encodeURIComponent(normPw(pw))}`;
 // Stellt sicher, dass jedes (Name+Passwort)-Paar global eindeutig ist und auf
 // diese Klasse zeigt. Bei Kollision mit einer anderen Klasse wird das Passwort
 // neu erzeugt. Liefert die (ggf. aktualisierte) Passwort-Map zurück.
@@ -122,10 +125,13 @@ async function ensureUniqueLogins(env, code, slots, pw) {
     const n = norm(name);
     let p = pw[n] || genPw();
     let tries = 0;
-    while (tries < 50) {
+    while (tries < 60) {
       const owner = await env.PROGRESS.get(lookKey(n, p));
       if (!owner || owner === code) break; // frei oder bereits unsere Klasse
-      p = genPw(tries > 15); // Kollision mit fremder Klasse → neues Passwort
+      // Kollision mit fremder Klasse → neues Passwort; nach einigen Versuchen
+      // garantiert eindeutiger Zufalls-Suffix, damit nie ein fremder Eintrag
+      // überschrieben wird.
+      p = genPw(tries > 20 ? '-' + Math.random().toString(36).slice(2, 6) : '');
       tries++;
     }
     pw[n] = p;
@@ -224,19 +230,22 @@ async function handleApi(request, env, url) {
     if (p === '/api/admin/teachers') {
       if (ctx.role !== 'admin') return json({ error: 'forbidden' }, 403);
       if (request.method === 'GET') {
+        // Klassen einmal laden und Eigentümer zählen (statt pro Lehrer neu).
+        const cl = await env.PROGRESS.list({ prefix: 'class:' });
+        const byOwner = {};
+        for (const ck of cl.keys) {
+          const cr = await env.PROGRESS.get(ck.name);
+          if (!cr) continue;
+          let o; try { o = norm(JSON.parse(cr).owner); } catch (e) { continue; }
+          if (o) byOwner[o] = (byOwner[o] || 0) + 1;
+        }
         const list = await env.PROGRESS.list({ prefix: 'teacher:' });
         const teachers = [];
         for (const k of list.keys) {
           const raw = await env.PROGRESS.get(k.name);
           if (!raw) continue;
           let t; try { t = JSON.parse(raw); } catch (e) { continue; }
-          const cl = await env.PROGRESS.list({ prefix: 'class:' });
-          let classes = 0;
-          for (const ck of cl.keys) {
-            const cr = await env.PROGRESS.get(ck.name);
-            if (cr && norm(JSON.parse(cr).owner) === norm(t.username)) classes++;
-          }
-          teachers.push({ username: t.username, label: t.label || '', created: t.created || 0, classes });
+          teachers.push({ username: t.username, label: t.label || '', created: t.created || 0, classes: byOwner[norm(t.username)] || 0 });
         }
         teachers.sort((a, b) => (a.label || a.username).localeCompare(b.label || b.username));
         return json({ teachers });
@@ -339,8 +348,9 @@ async function handleApi(request, env, url) {
       if (!code) return json({ error: 'bad-params' }, 400);
       const clsRaw = await env.PROGRESS.get(classKey(code));
       const cls = clsRaw ? JSON.parse(clsRaw) : null;
-      if (cls && !owns(ctx, cls)) return json({ error: 'forbidden' }, 403); // fremde Klasse
-      const game = classGame(cls || {});
+      if (!cls) return json({ error: 'unknown-class' }, 404);
+      if (!owns(ctx, cls)) return json({ error: 'forbidden' }, 403); // fremde Klasse
+      const game = classGame(cls);
       const slots = cls && Array.isArray(cls.slots) ? cls.slots : [];
       const prefix = stPrefix(code);
       const suffix = stSuffix(game);
