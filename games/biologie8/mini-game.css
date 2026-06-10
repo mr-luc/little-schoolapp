@@ -57,13 +57,13 @@
   background:#fff;
   color:var(--t);
   border:1px solid var(--bd);
-  box-shadow:0 6px 14px rgba(22,52,38,.08);
+  box-shadow:0 6px 14px rgba(21,70,45,.08);
 }
-.mini-answer.right{background:#dff7e6;border-color:#1f8f55;color:#135d38}
+.mini-answer.right{background:#dff7e6;border-color:#16a34a;color:#135d38}
 .mini-answer.wrong{background:#fde2e2;border-color:#d94848;color:#7b2020}
 .mini-answer:disabled{opacity:1}
 #miniGameButton{
-  background:linear-gradient(135deg,#7c5cff,#277da1);
+  background:linear-gradient(135deg,#1f8f55,#277da1);
   color:#fff;
 }
 @media(max-width:760px){
