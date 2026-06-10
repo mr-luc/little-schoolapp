@@ -21,6 +21,7 @@ const CORS = {
 // Verfügbare Spiele. Quelle für /api/games und das Dropdown im Lehrer-Bereich.
 const GAMES = [
   { id: 'chemie8', title: 'Little Chemie 8' },
+  { id: 'biologie8', title: 'Bio-Alchemie (Biologie 8)' },
 ];
 const DEFAULT_GAME = 'chemie8';
 const gameAllowed = (g) => GAMES.some((x) => x.id === g);

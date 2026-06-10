@@ -1,0 +1,33 @@
+.category-tabs{
+  position:static;
+  display:flex;
+  gap:8px;
+  overflow-x:auto;
+  padding:5px 2px 8px;
+  background:transparent;
+  border-bottom:0;
+}
+.category-pill.active-tab{
+  background:linear-gradient(135deg,var(--g),var(--b));
+  color:#fff;
+  border-color:transparent;
+  box-shadow:0 8px 18px rgba(31,143,85,.22);
+}
+.category-progress{
+  float:right;
+  padding:2px 8px;
+  border-radius:999px;
+  background:rgba(31,143,85,.12);
+  color:var(--g);
+  font-size:.88em;
+}
+.category-empty{
+  grid-column:1/-1;
+  padding:16px;
+  border-radius:16px;
+  background:rgba(255,255,255,.75);
+  border:1px dashed var(--bd);
+  color:var(--m);
+  font-weight:850;
+  text-align:center;
+}
