@@ -28,7 +28,8 @@ Dieses Projekt läuft als **Cloudflare Worker mit statischen Assets**
 ├── wrangler.toml
 ├── .assetsignore
 ├── games/
-│   └── chemie8/            # das Spiel „Little Chemie 8" (index/app/style/effects)
+│   ├── chemie8/            # das Spiel „Little Chemie 8" (index/app/style/effects)
+│   └── biologie8/          # das Spiel „Little Biologie 8"
 └── CLOUDFLARE.md
 ```
 
