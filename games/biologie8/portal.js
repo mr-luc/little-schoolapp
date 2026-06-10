@@ -52,7 +52,7 @@
     try {
       fetch('/api/progress', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: ident.code, name: ident.name, game: GAME, state: st })
+        body: JSON.stringify({ code: ident.code, name: ident.name, game: GAME, pw: ident.pw || '', state: st })
       });
     } catch (e) {}
   }
@@ -73,7 +73,7 @@
   if (sessionStorage.getItem('bio8-hydrated-for') !== who) {
     syncing = true;            // Schreibvorgänge der Hydration nicht zurückpushen
     hide();
-    fetch('/api/progress?code=' + encodeURIComponent(ident.code) + '&name=' + encodeURIComponent(ident.name) + '&game=' + encodeURIComponent(GAME))
+    fetch('/api/progress?code=' + encodeURIComponent(ident.code) + '&name=' + encodeURIComponent(ident.name) + '&game=' + encodeURIComponent(GAME) + '&pw=' + encodeURIComponent(ident.pw || ''))
       .then(function (r) {
         if (r.status === 403) { location.href = '/'; return null; } // falsches Spiel/Klasse → Portal
         return r.json().catch(function () { return null; });

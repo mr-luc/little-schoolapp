@@ -35,9 +35,10 @@ Dieses Projekt läuft als **Cloudflare Worker mit statischen Assets**
 
 ## Datenmodell (KV-Namespace `PROGRESS`)
 
-- `class:<code>` → `{ code, label, created, slots:[namen], game, owner }`
-  – Feld `game` = das der Klasse zugewiesene Spiel; `owner` = Benutzername der
-  Lehrkraft, die die Klasse angelegt hat (oder `admin`).
+- `class:<code>` → `{ code, label, created, slots:[namen], game, owner, pw }`
+  – `game` = zugewiesenes Spiel; `owner` = Benutzername der anlegenden Lehrkraft
+  (oder `admin`); `pw` = Map `Login-Name → einfaches Passwort` (z. B. `apfel7`),
+  beim Erzeugen der Logins automatisch vergeben.
 - `st:<code>:<name>:<game>` → Spielstand `{ deck, coins, xp, name, game, updated }`
   – Spiel im Schlüssel, damit Stände je Spiel getrennt sind.
 - `cfg:teacherpin` → **Admin-PIN**.
@@ -61,14 +62,17 @@ Dieses Projekt läuft als **Cloudflare Worker mit statischen Assets**
 
 - `GET /api/ping` – Erkennung.
 - `GET /api/games` – Liste verfügbarer Spiele `[{id,title}]` (für das Dropdown).
-- `GET|POST /api/progress` – Schüler-Sync, mit `game`-Parameter; Schlüssel inkl.
-  Spiel. Prüft: Klasse existiert + Name in slots (sofern slots) + Spiel passt
-  zum zugewiesenen Spiel. Die Antwort enthält das `game` der Klasse.
+- `GET|POST /api/progress` – Schüler-Sync, mit `game`- und `pw`-Parameter;
+  Schlüssel inkl. Spiel. Prüft: Klasse existiert + Name in slots (sofern slots)
+  + Passwort (sofern für den Login gesetzt) + Spiel passt zum zugewiesenen
+  Spiel. Die Antwort enthält das `game` der Klasse.
 - `GET /api/teacher/status`, `POST /api/teacher/setup`, `POST /api/teacher/login`.
 - `GET|POST|DELETE /api/teacher/classes` – beim Anlegen wird zusätzlich `game`
   gesetzt.
-- `GET /api/class?code=` – liefert slots + game + students (des zugewiesenen
-  Spiels).
+- `GET /api/class?code=` – liefert slots + game + `pw` (Passwort-Map) + students
+  (des zugewiesenen Spiels).
+- `POST /api/teacher/classes` mit `{code, regenpw:true}` – erzeugt neue
+  Passwörter für alle Logins der Klasse.
 
 ## Einrichtung
 
@@ -89,10 +93,14 @@ Benutzername leer) oder als **Lehrer** (Benutzername + PIN). Der Admin legt
 Lehrer-Logins im Bereich „Lehrer-Logins verwalten" an. Danach im Bereich:
 
 - **Klasse anlegen:** Klassencode + optionale Bezeichnung + **Anzahl Schüler** +
-  **Spiel (Dropdown)**. Die **Login-Namen werden automatisch erzeugt** (z. B.
-  `Argon-01`, `Helium-02`) und in der Klassenansicht angezeigt.
-- Pro Klasse die **Login-Liste mit Status** ansehen (Level, Begriffe, Münzen,
-  XP, „zuletzt aktiv") und bei Bedarf **weitere Logins erzeugen**.
+  **Spiel (Dropdown)**. **Login-Name und einfaches Passwort werden automatisch
+  erzeugt** (z. B. `Argon-01` / `apfel7`) und in der Klassenansicht angezeigt.
+- Pro Klasse die **Login-Liste mit Passwort und Status** ansehen (Level,
+  Begriffe, Münzen, XP, „zuletzt aktiv"), **weitere Logins erzeugen**,
+  **Passwörter neu erzeugen** und die Logins als **DIN-A4-PDF** exportieren
+  (Druck-/„Als PDF speichern"-Ansicht mit Karten zum Austeilen).
+- Schüler:innen melden sich im Portal mit **Klassencode + Login-Name +
+  Passwort** an.
 
 **Wichtig:** Schüler:innen melden sich im **Portal** mit **Klassencode +
 zugewiesenem Login-Namen** an und werden automatisch zum zugewiesenen Spiel

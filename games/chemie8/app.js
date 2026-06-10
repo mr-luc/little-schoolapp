@@ -36,11 +36,11 @@ function applyState(s){if(!s||typeof s!=='object')return;deck=[...new Set([...ST
 function getIdent(){try{return JSON.parse(localStorage.getItem(IDENT)||'null')}catch(e){return null}}
 function setIdent(i){ident=i;localStorage.setItem(IDENT,JSON.stringify(i))}
 async function cloudAvailable(){try{const c=new AbortController(),t=setTimeout(()=>c.abort(),2500);const r=await fetch('/api/ping',{signal:c.signal});clearTimeout(t);return r.ok}catch(e){return false}}
-async function fetchProgress(id){try{const r=await fetch('/api/progress?code='+encodeURIComponent(id.code)+'&name='+encodeURIComponent(id.name)+'&game='+encodeURIComponent(GAME));let j={};try{j=await r.json()}catch(e){}return{status:r.status,ok:r.ok,state:j.state||null,error:j.error}}catch(e){return{status:0,ok:false,state:null}}}
+async function fetchProgress(id){try{const r=await fetch('/api/progress?code='+encodeURIComponent(id.code)+'&name='+encodeURIComponent(id.name)+'&game='+encodeURIComponent(GAME)+'&pw='+encodeURIComponent(id.pw||''));let j={};try{j=await r.json()}catch(e){}return{status:r.status,ok:r.ok,state:j.state||null,error:j.error}}catch(e){return{status:0,ok:false,state:null}}}
 function freshState(){deck=[...START];coins=5;xp=0;combo=0;save()}
 function hydrate(res){if(res&&res.state&&Array.isArray(res.state.deck))applyState(res.state);else freshState()}
 function finishCloud(){setAccountUI();unlock(true);lastRank=rank();resetSlots();render()}
-async function push(){if(!cloudOn||!ident)return;try{await fetch('/api/progress',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:ident.code,name:ident.name,game:GAME,state:currentState()})})}catch(e){}}
+async function push(){if(!cloudOn||!ident)return;try{await fetch('/api/progress',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:ident.code,name:ident.name,game:GAME,pw:ident.pw||'',state:currentState()})})}catch(e){}}
 function schedulePush(){if(!cloudOn||!ident)return;clearTimeout(pushTimer);pushTimer=setTimeout(push,800)}
 function setAccountUI(){const a=$('#account');if(!a)return;if(cloudOn&&ident){a.hidden=false;a.textContent='👤 '+ident.name;a.title='Klasse: '+ident.code+' · tippen zum Wechseln';a.onclick=logout}else a.hidden=true}
 // Der Login kommt vom Portal: zurück zum Portal (ident wird dort gesetzt).
