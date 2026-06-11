@@ -52,6 +52,31 @@
     .stat{background:#fffaf3;border:1px solid var(--line);border-radius:12px;padding:8px 12px}
     .stat b{display:block;font-size:1.2rem;font-weight:800}.stat span{font-size:.78rem;color:var(--muted);font-weight:700}
     footer{text-align:center;padding:18px;color:var(--muted);font-weight:600;font-size:.82rem}
+    /* Live-Ranking (Beamer-Vollbild) */
+    #rankOverlay{position:fixed;inset:0;z-index:9999;background:linear-gradient(160deg,#1a1230,#241a3d 55%,#2a1f12);color:#fff;display:none;flex-direction:column;padding:clamp(12px,2.5vw,28px)}
+    #rankOverlay.show{display:flex}
+    .rk-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+    .rk-title{font-size:clamp(1.2rem,3vw,2rem);font-weight:900;margin:0}
+    .rk-sub{color:#c9bfe6;font-weight:700;font-size:.85rem;margin-top:2px}
+    .rk-live{display:inline-flex;align-items:center;gap:6px;font-weight:800;color:#7ef0a6;font-size:.82rem;letter-spacing:.5px}
+    .rk-dot{width:10px;height:10px;border-radius:50%;background:#34d399;animation:rkPulse 1.6s infinite}
+    @keyframes rkPulse{0%{box-shadow:0 0 0 0 rgba(52,211,153,.6)}70%{box-shadow:0 0 0 12px rgba(52,211,153,0)}100%{box-shadow:0 0 0 0 rgba(52,211,153,0)}}
+    .rk-spacer{flex:1}
+    .rk-tabs{display:flex;gap:8px;flex-wrap:wrap}
+    .rk-tab,.rk-btn{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:999px;padding:8px 14px;font-weight:800;font-size:.88rem;cursor:pointer;box-shadow:none}
+    .rk-tab.active{background:linear-gradient(135deg,#f59e0b,#ef4444);border-color:transparent}
+    .rk-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding-right:4px}
+    .rk-row{display:flex;align-items:center;gap:clamp(8px,1.6vw,18px);background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:clamp(8px,1.3vw,15px) clamp(12px,2vw,22px);transition:transform .35s,background .35s}
+    .rk-row.top1{background:linear-gradient(135deg,rgba(245,196,30,.30),rgba(255,255,255,.06));border-color:rgba(245,196,30,.5)}
+    .rk-row.top2{background:linear-gradient(135deg,rgba(203,213,225,.24),rgba(255,255,255,.05))}
+    .rk-row.top3{background:linear-gradient(135deg,rgba(205,127,50,.26),rgba(255,255,255,.05))}
+    .rk-pos{font-size:clamp(1.3rem,3vw,2.2rem);font-weight:900;width:clamp(44px,7vw,76px);text-align:center}
+    .rk-move{font-size:1rem;font-weight:900;width:26px;text-align:center}
+    .rk-move.up{color:#34d399}.rk-move.down{color:#f87171}.rk-move.same{color:#8b80a8}
+    .rk-name{flex:1;font-size:clamp(1.05rem,2.6vw,1.9rem);font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .rk-meta{color:#c9bfe6;font-weight:700;font-size:clamp(.7rem,1.4vw,.95rem);text-align:right;white-space:nowrap}
+    .rk-score{font-size:clamp(1.2rem,2.8vw,2rem);font-weight:900;font-variant-numeric:tabular-nums;min-width:clamp(70px,9vw,130px);text-align:right}
+    .rk-empty{flex:1;display:flex;align-items:center;justify-content:center;color:#c9bfe6;font-weight:700;font-size:1.1rem;text-align:center;padding:20px}
     [hidden]{display:none!important}
   </style>
 </head>
@@ -335,7 +360,7 @@
     let html='<div class="panel"><h2>👥 Klasse: '+esc(code)+' <span class="gametag">'+esc(gameTitle(game))+'</span></h2>';
     html+='<div class="controls" style="margin-bottom:10px"><input id="moreCount" type="number" min="1" max="200" placeholder="Anzahl"style="max-width:130px"><button id="addLoginsBtn" class="ghost">+ Logins erzeugen</button></div>';
     html+='<div class="controls" style="margin-bottom:10px"><span class="cnt">Spiel:</span><select id="changeGame">'+GAMES.map(g=>`<option value="${esc(g.id)}"${g.id===game?' selected':''}>${esc(g.title)}</option>`).join('')+'</select><button id="changeGameBtn" class="ghost">Spiel zuweisen</button></div>';
-    html+='<div class="controls" style="margin-bottom:10px"><button id="exportPdfBtn" class="ghost">🖨️ Logins als PDF (A4)</button><button id="regenPwBtn" class="ghost">🔑 Passwörter neu erzeugen</button></div>';
+    html+='<div class="controls" style="margin-bottom:10px"><button id="rankBtn">🏆 Live-Ranking (Beamer)</button><button id="exportPdfBtn" class="ghost">🖨️ Logins als PDF (A4)</button><button id="regenPwBtn" class="ghost">🔑 Passwörter neu erzeugen</button></div>';
     html+='<p style="color:#5e5043;font-weight:600;font-size:.82rem;margin:0 0 8px">Schüler:innen melden sich nur mit <b>Login-Name + Passwort</b> an (ohne Klassencode). Bei vor diesem Update angelegten Klassen einmal „🔑 Passwörter neu erzeugen", damit der code-freie Login funktioniert.</p>';
     html+='<div class="summary"><div class="stat"><b>'+slots.length+'</b><span>Logins</span></div><div class="stat"><b>'+active+'</b><span>aktiv</span></div><div class="stat"><b>'+avg+'</b><span>Ø XP (aktiv)</span></div></div>';
     if(!slots.length && !students.length){
@@ -358,6 +383,84 @@
     const cg=$('#changeGameBtn');if(cg)cg.onclick=()=>changeGame(code);
     const ep=$('#exportPdfBtn');if(ep)ep.onclick=()=>exportPdf(code);
     const rp=$('#regenPwBtn');if(rp)rp.onclick=()=>regenPw(code);
+    const rk=$('#rankBtn');if(rk)rk.onclick=()=>openRanking(code);
+  }
+
+  /* ---- Live-Ranking: Beamer-taugliche, automatisch aktualisierte Rangliste ---- */
+  const RANK_METRICS={entdeckt:{label:'Begriffe',icon:'🧩'},muenzen:{label:'Münzen',icon:'🪙'},xp:{label:'XP',icon:'⭐'}};
+  let rankTimer=null,rankCode='',rankMetric='entdeckt',rankPrev={};
+  function ensureRankOverlay(){
+    let o=document.getElementById('rankOverlay');
+    if(o)return o;
+    o=document.createElement('div');o.id='rankOverlay';
+    o.innerHTML='<div class="rk-head">'+
+        '<div><h2 class="rk-title" id="rkTitle">🏆 Live-Ranking</h2><div class="rk-sub" id="rkSub"></div></div>'+
+        '<span class="rk-live"><span class="rk-dot"></span>LIVE</span>'+
+        '<div class="rk-spacer"></div>'+
+        '<div class="rk-tabs" id="rkTabs"></div>'+
+        '<button class="rk-btn" id="rkFull">⛶ Vollbild</button>'+
+        '<button class="rk-btn" id="rkClose">✕ Schließen</button>'+
+      '</div>'+
+      '<div class="rk-list" id="rkList"></div>';
+    document.body.appendChild(o);
+    o.querySelector('#rkClose').onclick=closeRanking;
+    o.querySelector('#rkFull').onclick=toggleRankFull;
+    o.querySelector('#rkTabs').innerHTML=Object.keys(RANK_METRICS).map(k=>`<button class="rk-tab" data-metric="${k}">${RANK_METRICS[k].icon} ${RANK_METRICS[k].label}</button>`).join('');
+    o.querySelectorAll('#rkTabs [data-metric]').forEach(b=>b.onclick=()=>{rankMetric=b.dataset.metric;rankPrev={};updateRankTabs();pollRanking()});
+    return o;
+  }
+  function updateRankTabs(){const o=document.getElementById('rankOverlay');if(o)o.querySelectorAll('.rk-tab').forEach(b=>b.classList.toggle('active',b.dataset.metric===rankMetric))}
+  function toggleRankFull(){const o=document.getElementById('rankOverlay');if(!document.fullscreenElement){if(o&&o.requestFullscreen)o.requestFullscreen().catch(()=>{})}else if(document.exitFullscreen){document.exitFullscreen().catch(()=>{})}}
+  function rankKey(e){if(e.key==='Escape')closeRanking()}
+  function openRanking(code){
+    rankCode=code;rankMetric='entdeckt';rankPrev={};
+    const o=ensureRankOverlay();updateRankTabs();
+    o.querySelector('#rkTitle').textContent='🏆 Live-Ranking · '+code;
+    o.classList.add('show');
+    document.addEventListener('keydown',rankKey);
+    pollRanking();
+    if(rankTimer)clearInterval(rankTimer);
+    rankTimer=setInterval(pollRanking,6000);
+  }
+  function closeRanking(){
+    if(rankTimer){clearInterval(rankTimer);rankTimer=null}
+    rankCode='';
+    const o=document.getElementById('rankOverlay');if(o)o.classList.remove('show');
+    document.removeEventListener('keydown',rankKey);
+    if(document.fullscreenElement&&document.exitFullscreen)document.exitFullscreen().catch(()=>{});
+  }
+  async function pollRanking(){
+    if(!rankCode)return;
+    const res=await api('api/class?code='+encodeURIComponent(rankCode));
+    if(res.status===401){closeRanking();return logout()}
+    if(!res.ok||!rankCode)return;
+    renderRanking(res.data.students||[],res.data.game);
+  }
+  function renderRanking(students,game){
+    const o=document.getElementById('rankOverlay');if(!o)return;
+    const m=rankMetric,mi=RANK_METRICS[m];
+    const anyXp=students.some(s=>(s.xp||0)>0);
+    o.querySelector('#rkSub').textContent=gameTitle(game)+' · sortiert nach '+mi.label+' · '+students.length+' aktiv · Stand '+new Date().toLocaleTimeString('de-DE');
+    const val=s=>m==='entdeckt'?(s.entdeckt||0):m==='muenzen'?(s.muenzen||0):(s.xp||0);
+    const sorted=students.slice().sort((a,b)=>val(b)-val(a)||(b.entdeckt||0)-(a.entdeckt||0)||(b.muenzen||0)-(a.muenzen||0));
+    const list=o.querySelector('#rkList');
+    if(!sorted.length){list.innerHTML='<div class="rk-empty">Noch keine aktiven Schüler:innen.<br>Sobald gespielt wird, erscheint hier das Ranking. 🎮</div>';rankPrev={};return}
+    const medal=['🥇','🥈','🥉'],newPrev={};
+    list.innerHTML=sorted.map((s,i)=>{
+      const nm=(s.name||'').toLowerCase();newPrev[nm]=i+1;
+      const prev=rankPrev[nm];let move='·',cls='same';
+      if(prev!==undefined){if(prev>i+1){move='▲';cls='up'}else if(prev<i+1){move='▼';cls='down'}}
+      const pos=i<3?medal[i]:(i+1)+'.';
+      const meta='🧩 '+(s.entdeckt||0)+' · 🪙 '+(s.muenzen||0)+(anyXp?' · ⭐ '+(s.xp||0):'');
+      return '<div class="rk-row'+(i<3?' top'+(i+1):'')+'">'+
+        '<div class="rk-pos">'+pos+'</div>'+
+        '<div class="rk-move '+cls+'">'+move+'</div>'+
+        '<div class="rk-name">'+esc(s.name||'?')+'</div>'+
+        '<div class="rk-meta">'+meta+'</div>'+
+        '<div class="rk-score">'+mi.icon+' '+val(s)+'</div>'+
+      '</div>';
+    }).join('');
+    rankPrev=newPrev;
   }
   async function regenPw(code){
     if(!confirm('Für ALLE Logins dieser Klasse neue Passwörter erzeugen?\n\nDie alten Passwörter gelten dann nicht mehr – die Schüler:innen brauchen die neuen. Spielstände bleiben erhalten.'))return;
