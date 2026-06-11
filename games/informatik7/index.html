@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+  <title>Informatik Alchemie – Klasse 7</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="extra.css">
+</head>
+<body>
+  <div id="hdr">
+    <div id="ttl">💻 Informatik Alchemie</div>
+    <div class="hbtns">
+      <span id="level">Level 1: Grundlagen</span>
+      <span id="cnt">4 / 57</span>
+      <button class="hbtn" id="account" hidden title="Abmelden"></button>
+      <button class="hbtn" onclick="hint()" title="Tipp">💡</button>
+      <button class="hbtn" onclick="openLex()" title="Lexikon">📖</button>
+      <button class="hbtn" id="soundBtn" onclick="toggleAudio()" title="Ton an/aus">🔇</button>
+    </div>
+  </div>
+
+  <div id="pb"><div id="pf" style="width:7%"></div></div>
+
+  <div id="cbar">
+    <div class="cslot" id="sa"><span class="se">❓</span><span class="sn">Auswählen</span></div>
+    <div class="op">+</div>
+    <div class="cslot" id="sb"><span class="se">❓</span><span class="sn">Auswählen</span></div>
+    <div class="op">=</div>
+    <div id="rslot"><span class="se" id="re">❓</span><span class="sn" id="rn"></span><span class="result-note" id="rnote"></span></div>
+  </div>
+
+  <div id="hint">// Tippe zwei Elemente an, um sie zu kombinieren</div>
+
+  <div id="tools">
+    <input id="search" placeholder="🔍 Element suchen…" oninput="renderGrid()">
+    <div id="filters"></div>
+  </div>
+
+  <div id="grid"></div>
+  <div id="toast"></div>
+
+  <div id="lex" class="modal">
+    <div class="panel">
+      <div class="panel-h"><b>📖 Lexikon</b><button onclick="closeLex()">✕</button></div>
+      <div id="lexbody" class="panel-body"></div>
+      <div class="panel-foot"><button class="danger" onclick="resetGame()">🔄 Spiel zurücksetzen</button></div>
+    </div>
+  </div>
+
+  <div id="win">
+    <div class="cup">🏆</div>
+    <h2>./win --alle-entdeckt</h2>
+    <p>Du hast alle 57 Informatik-Konzepte gefunden!<br>Du bist ein echter Informatik-Profi! 🎉</p>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

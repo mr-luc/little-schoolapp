@@ -1,0 +1,23 @@
+.filter.locked{opacity:.55;background:rgba(255,255,255,.45);border-style:dashed;color:#789;cursor:not-allowed}
+.card-info{display:inline-block;margin-top:4px;color:#314c66;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:.92rem;line-height:1.42;font-weight:650}
+#level{max-width:320px;overflow:hidden;text-overflow:ellipsis;font-size:.86rem;color:#24384d}
+#cnt{font-size:.86rem;color:#24384d}
+#ttl{font-size:1.15rem;letter-spacing:.01em}
+.hbtn{font-size:1.18rem;padding:8px 12px}
+#hint{font-size:.95rem;line-height:1.5;color:#314c66;font-weight:650;padding:10px 14px}
+#hint b{font-size:1.02em;color:#056b92}
+.learn-line{display:inline-block;margin-top:4px;color:#1f3b54;font-size:.92rem;line-height:1.42;font-weight:650}
+#search{font-size:1rem;padding:10px 13px;color:#1d2f43}
+.filter{font-size:.88rem;padding:8px 12px;color:#314c66}
+.chip{min-width:104px;max-width:128px;padding:12px 8px 9px;border-width:2px;border-top-width:5px}
+.em{font-size:3rem}.nm{font-size:.78rem;line-height:1.15;white-space:normal;color:#1d2f43}.chip .mini{font-size:.62rem;line-height:1.15;margin-top:4px;color:#536d86}
+.sn{font-size:.72rem;line-height:1.15;color:#314c66}.se{font-size:3.25rem}.cslot,#rslot{width:112px;height:112px}.result-note{font-size:.64rem;color:#314c66}
+.lexcat{font-size:1rem}.ln{font-size:1.05rem}.ld{font-size:.92rem;color:#314c66}.lr{font-size:.82rem}.warn{font-size:.82rem;line-height:1.35}
+#toast{font-size:1rem;line-height:1.3}
+#discoverPop{position:fixed;inset:0;z-index:9997;display:none;align-items:center;justify-content:center;pointer-events:none;padding:18px;background:rgba(10,35,55,.08)}
+#discoverPop.show{display:flex;animation:fadePop .35s ease-out}
+.discover-card{width:min(430px,92vw);background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(231,246,251,.98));border:2px solid rgba(61,200,216,.65);border-radius:24px;padding:20px 22px;text-align:center;box-shadow:0 18px 46px rgba(10,127,168,.28),0 0 0 8px rgba(61,200,216,.12);animation:discoverBounce .55s cubic-bezier(.2,.95,.25,1.25)}
+.spark{font-size:1.15rem;color:#e6aa14;letter-spacing:.28em;margin-bottom:2px}.discover-icon{font-size:4rem;line-height:1}.discover-title{font-size:1.45rem;font-weight:950;color:#056b92;margin-top:4px}.discover-combo{font-family:"Courier New",monospace;font-size:.9rem;font-weight:850;color:#24384d;background:rgba(238,243,249,.9);border:1px solid var(--bd);border-radius:12px;padding:8px;margin:10px 0}.discover-explain{font-size:.98rem;line-height:1.45;color:#314c66;font-weight:650}.discover-badge{display:inline-block;margin-top:10px;background:linear-gradient(135deg,#e6aa14,#ffd35b);color:#3f2a00;border-radius:999px;padding:7px 12px;font-weight:950}
+@keyframes discoverBounce{0%{opacity:0;transform:scale(.62) translateY(22px)}65%{opacity:1;transform:scale(1.06) translateY(-4px)}100%{opacity:1;transform:scale(1) translateY(0)}}@keyframes fadePop{from{opacity:0}to{opacity:1}}
+@media (min-width:720px){.chip{min-width:116px;max-width:140px}.nm{font-size:.84rem}.chip .mini{font-size:.66rem}}
+@media (max-width:520px){#ttl{font-size:.98rem}#level{max-width:165px;font-size:.72rem}.card-info,.learn-line{font-size:.82rem}.chip{min-width:88px;max-width:104px;padding:10px 6px 8px}.em{font-size:2.55rem}.nm{font-size:.68rem}.chip .mini{font-size:.55rem}.sn{font-size:.62rem}.se{font-size:2.65rem}.cslot,#rslot{width:90px;height:92px}#hint{font-size:.84rem}.filter{font-size:.78rem}.discover-title{font-size:1.2rem}.discover-icon{font-size:3.35rem}.discover-explain{font-size:.88rem}}
