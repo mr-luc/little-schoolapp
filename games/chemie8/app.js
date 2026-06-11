@@ -61,9 +61,11 @@ function schedulePush(){if(!cloudOn||!ident)return;clearTimeout(pushTimer);pushT
 function setAccountUI(){const a=$('#account');if(!a)return;if(cloudOn&&ident){a.hidden=false;a.textContent='👤 '+ident.name;a.title='Klasse: '+ident.code+' · tippen zum Wechseln';a.onclick=logout}else a.hidden=true}
 // Der Login kommt vom Portal: zurück zum Portal (ident wird dort gesetzt).
 function logout(){localStorage.removeItem(IDENT);location.href='/'}
+// Präsenz-Heartbeat: meldet regelmäßig „online" fürs Live-Ranking der Lehrkraft.
+function heartbeat(){if(!cloudOn||!ident)return;try{fetch('/api/presence',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:ident.code,name:ident.name,game:GAME,pw:ident.pw||''})}).catch(()=>{})}catch(e){}}
 // Kein eigener Login mehr im Spiel – die Anmeldung erfolgt im Portal (index.html).
 // Ohne gültige ident im localStorage geht es zurück zum Portal.
-async function initCloud(){if(new URLSearchParams(location.search).get('test')==='1'){cloudOn=false;setAccountUI();toast('🧪 Testmodus – Fortschritt wird nicht gespeichert');return}cloudOn=await cloudAvailable();if(!cloudOn){setAccountUI();return}ident=getIdent();if(!ident||!ident.code||!ident.name){location.href='/';return}const res=await fetchProgress(ident);if(res.status===403){location.href='/';return}/* ident behalten – das Portal prüft neu (z. B. neu zugewiesenes Spiel) und entfernt sie nur, wenn wirklich ungültig */hydrate(res);finishCloud();toast('☁️ Angemeldet als '+ident.name)}
+async function initCloud(){if(new URLSearchParams(location.search).get('test')==='1'){cloudOn=false;setAccountUI();toast('🧪 Testmodus – Fortschritt wird nicht gespeichert');return}cloudOn=await cloudAvailable();if(!cloudOn){setAccountUI();return}ident=getIdent();if(!ident||!ident.code||!ident.name){location.href='/';return}const res=await fetchProgress(ident);if(res.status===403){location.href='/';return}/* ident behalten – das Portal prüft neu (z. B. neu zugewiesenes Spiel) und entfernt sie nur, wenn wirklich ungültig */hydrate(res);finishCloud();toast('☁️ Angemeldet als '+ident.name);heartbeat();setInterval(heartbeat,20000)}
 function setSlot(el,id,label){el.className='slot'+(id?' on':'');el.innerHTML=id?`${icon(id)}<span>${name(id)}</span><small>${info(id)}</small>`:`❔<span>${label}</span>`}
 function setResult(id,ok){R.className='slot '+(ok?'ok':'bad');R.innerHTML=id?`${icon(id)}<span>${name(id)}</span>`:'✨<span>Ergebnis</span>'}
 function resetSlots(){setSlot(A,null,'1. Begriff');setSlot(B,null,'2. Begriff');setResult(null,true);render()}

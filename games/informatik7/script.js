@@ -83,6 +83,9 @@ async function push(){if(!cloudOn||!ident)return;try{await fetch('/api/progress'
 function schedulePush(){if(!cloudOn||!ident)return;if(pushTimer)clearTimeout(pushTimer);pushTimer=setTimeout(push,800)}
 function setAccountUI(){const a=$('account');if(!a)return;if(cloudOn&&ident){a.hidden=false;a.textContent='👤 '+ident.name;a.title='Klasse: '+ident.code+' · tippen zum Abmelden';a.onclick=logout}else a.hidden=true}
 function logout(){localStorage.removeItem(IDENT);location.href='/'}
+// Präsenz-Heartbeat: meldet regelmäßig „online", auch ohne neue Entdeckung,
+// damit die Lehrkraft im Live-Ranking alle anwesenden Schüler:innen sieht.
+function heartbeat(){if(!cloudOn||!ident)return;try{fetch('/api/presence',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:ident.code,name:ident.name,game:GAME,pw:ident.pw||''})}).catch(()=>{})}catch(e){}}
 // Ohne gültige ident im localStorage geht es zurück zum Portal.
 async function initCloud(){
   if(new URLSearchParams(location.search).get('test')==='1'){cloudOn=false;setAccountUI();showToast('🧪 Testmodus – Fortschritt wird nicht gespeichert');return}
@@ -97,6 +100,7 @@ async function initCloud(){
   renderFilters();renderGrid();updateStatus();
   setAccountUI();
   showToast('☁️ Angemeldet als '+ident.name);
+  heartbeat();setInterval(heartbeat,20000); // alle 20 s „online" melden
 }
 
 document.addEventListener('DOMContentLoaded',()=>{loadProgress();renderFilters();renderGrid();if($('hint'))$('hint').innerHTML='// Tippe zwei Begriffe an. Beim ersten Tipp siehst du eine kurze Erklärung.';initCloud()});
