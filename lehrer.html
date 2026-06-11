@@ -67,6 +67,7 @@
     .rk-tab.active{background:linear-gradient(135deg,#f59e0b,#ef4444);border-color:transparent}
     .rk-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding-right:4px}
     .rk-row{display:flex;align-items:center;gap:clamp(8px,1.6vw,18px);background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:clamp(8px,1.3vw,15px) clamp(12px,2vw,22px);transition:transform .35s,background .35s}
+    .rk-row.idle{opacity:.45}
     .rk-row.top1{background:linear-gradient(135deg,rgba(245,196,30,.30),rgba(255,255,255,.06));border-color:rgba(245,196,30,.5)}
     .rk-row.top2{background:linear-gradient(135deg,rgba(203,213,225,.24),rgba(255,255,255,.05))}
     .rk-row.top3{background:linear-gradient(135deg,rgba(205,127,50,.26),rgba(255,255,255,.05))}
@@ -420,7 +421,7 @@
     document.addEventListener('keydown',rankKey);
     pollRanking();
     if(rankTimer)clearInterval(rankTimer);
-    rankTimer=setInterval(pollRanking,6000);
+    rankTimer=setInterval(pollRanking,3000);
   }
   function closeRanking(){
     if(rankTimer){clearInterval(rankTimer);rankTimer=null}
@@ -434,19 +435,23 @@
     const res=await api('api/class?code='+encodeURIComponent(rankCode));
     if(res.status===401){closeRanking();return logout()}
     if(!res.ok||!rankCode)return;
-    renderRanking(res.data.students||[],res.data.game);
+    renderRanking(res.data.students||[],res.data.game,res.data.slots||[]);
   }
-  function renderRanking(students,game){
+  function renderRanking(students,game,slots){
     const o=document.getElementById('rankOverlay');if(!o)return;
     const m=rankMetric,mi=RANK_METRICS[m];
     const anyXp=students.some(s=>(s.xp||0)>0);
-    o.querySelector('#rkSub').textContent=gameTitle(game)+' · sortiert nach '+mi.label+' · '+students.length+' aktiv · Stand '+new Date().toLocaleTimeString('de-DE');
+    // Login-Namen in Original-Schreibweise anzeigen (Stände sind kleingeschrieben).
+    const disp={};slots.forEach(n=>{disp[n.toLowerCase()]=n});
+    const total=slots.length||students.length;
+    o.querySelector('#rkSub').textContent=gameTitle(game)+' · sortiert nach '+mi.label+' · '+students.length+' von '+total+' aktiv · Stand '+new Date().toLocaleTimeString('de-DE');
     const val=s=>m==='entdeckt'?(s.entdeckt||0):m==='muenzen'?(s.muenzen||0):(s.xp||0);
     const sorted=students.slice().sort((a,b)=>val(b)-val(a)||(b.entdeckt||0)-(a.entdeckt||0)||(b.muenzen||0)-(a.muenzen||0));
     const list=o.querySelector('#rkList');
-    if(!sorted.length){list.innerHTML='<div class="rk-empty">Noch keine aktiven Schüler:innen.<br>Sobald gespielt wird, erscheint hier das Ranking. 🎮</div>';rankPrev={};return}
+    if(!sorted.length&&!slots.length){list.innerHTML='<div class="rk-empty">Noch keine Logins in dieser Klasse.<br>Sobald gespielt wird, erscheint hier das Ranking. 🎮</div>';rankPrev={};return}
     const medal=['🥇','🥈','🥉'],newPrev={};
-    list.innerHTML=sorted.map((s,i)=>{
+    const activeSet={};sorted.forEach(s=>{activeSet[(s.name||'').toLowerCase()]=1});
+    let html=sorted.map((s,i)=>{
       const nm=(s.name||'').toLowerCase();newPrev[nm]=i+1;
       const prev=rankPrev[nm];let move='·',cls='same';
       if(prev!==undefined){if(prev>i+1){move='▲';cls='up'}else if(prev<i+1){move='▼';cls='down'}}
@@ -455,11 +460,24 @@
       return '<div class="rk-row'+(i<3?' top'+(i+1):'')+'">'+
         '<div class="rk-pos">'+pos+'</div>'+
         '<div class="rk-move '+cls+'">'+move+'</div>'+
-        '<div class="rk-name">'+esc(s.name||'?')+'</div>'+
+        '<div class="rk-name">'+esc(disp[nm]||s.name||'?')+'</div>'+
         '<div class="rk-meta">'+meta+'</div>'+
         '<div class="rk-score">'+mi.icon+' '+val(s)+'</div>'+
       '</div>';
     }).join('');
+    // Alle übrigen Logins (noch ohne Spielstand) ausgegraut anhängen.
+    let pos=sorted.length;
+    html+=slots.filter(n=>!activeSet[n.toLowerCase()]).map(n=>{
+      pos++;
+      return '<div class="rk-row idle">'+
+        '<div class="rk-pos">'+pos+'.</div>'+
+        '<div class="rk-move same">·</div>'+
+        '<div class="rk-name">'+esc(n)+'</div>'+
+        '<div class="rk-meta">noch nicht gestartet</div>'+
+        '<div class="rk-score">'+mi.icon+' 0</div>'+
+      '</div>';
+    }).join('');
+    list.innerHTML=html;
     rankPrev=newPrev;
   }
   async function regenPw(code){
