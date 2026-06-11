@@ -141,6 +141,48 @@ async function ensureUniqueLogins(env, code, slots, pw) {
   return pw;
 }
 
+// ---- Live-Ranking ----
+// KV ist nur "eventually consistent" und cached Lesezugriffe bis zu 60 s –
+// zu langsam für ein Live-Ranking im Klassenzimmer. Das Durable Object hält
+// deshalb die aktuellen Spielstände einer Klasse sofort konsistent im
+// Speicher. KV bleibt die dauerhafte Quelle; das DO ist nur der Live-Cache.
+export class ClassLive {
+  constructor(state) { this.state = state; }
+  async fetch(request) {
+    const url = new URL(request.url);
+    if (request.method === 'POST') {
+      if (url.pathname === '/clear') { await this.state.storage.deleteAll(); return new Response('ok'); }
+      let body; try { body = await request.json(); } catch (e) { return new Response('bad', { status: 400 }); }
+      const name = String((body && body.name) || '');
+      if (!name) return new Response('bad', { status: 400 });
+      await this.state.storage.put('s:' + name, body);
+      return new Response('ok');
+    }
+    const map = await this.state.storage.list({ prefix: 's:' });
+    return new Response(JSON.stringify([...map.values()]), { headers: { 'Content-Type': 'application/json' } });
+  }
+}
+// Ein DO je Klasse+Spiel; bei fehlendem Binding läuft alles weiter über KV.
+const liveStub = (env, code, game) => {
+  if (!env.LIVE) return null;
+  try { return env.LIVE.get(env.LIVE.idFromName(norm(code) + ':' + norm(game))); } catch (e) { return null; }
+};
+async function livePush(env, code, game, entry) {
+  const stub = liveStub(env, code, game);
+  if (!stub) return;
+  try { await stub.fetch('https://live/', { method: 'POST', body: JSON.stringify(entry) }); } catch (e) {}
+}
+async function liveList(env, code, game) {
+  const stub = liveStub(env, code, game);
+  if (!stub) return [];
+  try { const r = await stub.fetch('https://live/'); return r.ok ? await r.json() : []; } catch (e) { return []; }
+}
+async function liveClear(env, code, game) {
+  const stub = liveStub(env, code, game);
+  if (!stub) return;
+  try { await stub.fetch('https://live/clear', { method: 'POST' }); } catch (e) {}
+}
+
 async function handleApi(request, env, url) {
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
   const p = url.pathname;
@@ -211,7 +253,9 @@ async function handleApi(request, env, url) {
       if (game && norm(game) !== assigned) return json({ error: 'wrong-game', game: assigned }, 403);
       const clean = sanitize(state);
       if (!clean) return json({ error: 'bad-state' }, 400);
-      await env.PROGRESS.put(stKey(code, name, assigned), JSON.stringify({ ...clean, name: norm(name), game: assigned, updated: Date.now() }));
+      const entry = { ...clean, name: norm(name), game: assigned, updated: Date.now() };
+      await env.PROGRESS.put(stKey(code, name, assigned), JSON.stringify(entry));
+      await livePush(env, norm(code), assigned, entry); // sofort konsistenter Live-Cache
       return json({ ok: true, game: assigned });
     }
     return json({ error: 'method-not-allowed' }, 405);
@@ -337,6 +381,7 @@ async function handleApi(request, env, url) {
           if (!owns(ctx, c)) return json({ error: 'forbidden' }, 403);
           // Index-Einträge der Klasse aufräumen.
           if (c.pw && typeof c.pw === 'object') for (const n of (c.slots || [])) { const op = c.pw[norm(n)]; if (op) await env.PROGRESS.delete(lookKey(n, op)); }
+          await liveClear(env, code, classGame(c)); // Live-Cache der Klasse leeren
         }
         await env.PROGRESS.delete(classKey(code));
         return json({ ok: true });
@@ -369,6 +414,23 @@ async function handleApi(request, env, url) {
           xp: s.xp || 0,
           updated: s.updated || 0,
         });
+      }
+      // Live-Stände aus dem DO einmischen: aktueller als die (bis zu 60 s
+      // gecachten) KV-Werte; neue Spieler:innen erscheinen sofort.
+      const live = await liveList(env, code, game);
+      const byName = {}; students.forEach((s, i) => { byName[s.name] = i; });
+      for (const e of live) {
+        if (!e || !e.name) continue;
+        const row = {
+          name: e.name,
+          entdeckt: Array.isArray(e.deck) ? e.deck.length : 0,
+          muenzen: e.coins || 0,
+          xp: e.xp || 0,
+          updated: e.updated || 0,
+        };
+        const i = byName[e.name];
+        if (i === undefined) byName[e.name] = students.push(row) - 1;
+        else if ((row.updated || 0) >= (students[i].updated || 0)) students[i] = row;
       }
       students.sort((a, b) => b.xp - a.xp);
       return json({ code, game, owner: cls && cls.owner || '', slots, pw: cls && cls.pw || {}, anzahl: students.length, students });

@@ -19,3 +19,14 @@ binding = "ASSETS"
 [[kv_namespaces]]
 binding = "PROGRESS"
 id = "3d5084f60edb457da08df691b31a0a0d"
+
+# Durable Object für das Live-Ranking: hält die aktuellen Spielstände einer
+# Klasse sofort konsistent (KV cached Lesezugriffe bis zu 60 s). KV bleibt
+# die dauerhafte Quelle – ohne dieses Binding läuft alles weiter über KV.
+[[durable_objects.bindings]]
+name = "LIVE"
+class_name = "ClassLive"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["ClassLive"]
