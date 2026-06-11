@@ -82,13 +82,32 @@ const classGame = (cls) => {
 };
 
 // Pseudonyme Login-Namen erzeugen (eindeutig je Klasse, fortlaufend nummeriert).
+// Die Wortreihenfolge wird aus dem Klassencode deterministisch gemischt, damit
+// nicht alle Klassen mit denselben Namen (Argon-01, Helium-02 …) starten.
 const NAMEWORDS = ['Argon', 'Helium', 'Neon', 'Krypton', 'Xenon', 'Eisen', 'Kupfer', 'Zink', 'Gold', 'Silber', 'Natrium', 'Kalium', 'Calcium', 'Magnesium', 'Kohlenstoff', 'Sauerstoff', 'Stickstoff', 'Schwefel', 'Chlor', 'Jod', 'Lithium', 'Nickel', 'Platin', 'Titan', 'Bor', 'Brom', 'Fluor', 'Radon', 'Cobalt', 'Zinn'];
-function genSlots(existing, count) {
+function codeHash(code) {
+  let h = 2166136261 >>> 0;
+  const s = norm(code);
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+  return h || 1;
+}
+function shuffledWords(code) {
+  const a = NAMEWORDS.slice();
+  let h = codeHash(code);
+  for (let i = a.length - 1; i > 0; i--) {
+    h = Math.imul(h, 16807) >>> 0;
+    const j = h % (i + 1);
+    const t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+function genSlots(existing, count, code) {
+  const words = code ? shuffledWords(code) : NAMEWORDS;
   const out = [];
   const start = existing.length;
   for (let i = 0; i < count; i++) {
     const idx = start + i;
-    const word = NAMEWORDS[idx % NAMEWORDS.length];
+    const word = words[idx % words.length];
     out.push(`${word}-${String(idx + 1).padStart(2, '0')}`);
   }
   return out;
@@ -393,7 +412,7 @@ async function handleApi(request, env, url) {
           for (const n of slots) { const op = pw[norm(n)]; if (op) await env.PROGRESS.delete(lookKey(n, op)); }
           pw = {};
         }
-        if (count > 0) slots = slots.concat(genSlots(slots, count));
+        if (count > 0) slots = slots.concat(genSlots(slots, count, code));
         // Index (Name+Passwort)→Code aufbauen/auffrischen; macht Logins global eindeutig.
         pw = await ensureUniqueLogins(env, code, slots, pw);
         const cls = { code, label, created, slots, game, owner, pw };
