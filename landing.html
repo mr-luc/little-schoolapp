@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>SchoolClash · Lernspiele und Klassen-Challenges</title>
+  <meta name="description" content="SchoolClash ist eine moderne Cloud-Plattform für Lernspiele, Klassen-Challenges sowie Schüler- und Lehrerverwaltung.">
+  <style>
+    :root{
+      --navy:#071a2f;
+      --navy-2:#0d2742;
+      --ink:#102033;
+      --muted:#5c6d7f;
+      --line:#dcebf1;
+      --soft:#f5fbfd;
+      --card:#ffffff;
+      --cyan:#10b8c8;
+      --cyan-2:#26d6df;
+      --teal:#12a8a6;
+      --lime:#9bd80f;
+      --orange:#ffb020;
+      --purple:#7464ff;
+      --shadow:0 18px 45px rgba(7,26,47,.11);
+      --radius:24px;
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      min-height:100vh;
+      font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      color:var(--ink);
+      background:
+        radial-gradient(circle at 6% 8%,rgba(38,214,223,.16),transparent 25%),
+        radial-gradient(circle at 88% 10%,rgba(155,216,15,.14),transparent 26%),
+        linear-gradient(180deg,#fff 0%,#f6fbfd 48%,#fff 100%);
+    }
+    a{color:inherit;text-decoration:none}
+    .wrap{width:min(1180px,calc(100% - 32px));margin:0 auto}
+    .topbar{
+      position:sticky;top:0;z-index:20;
+      backdrop-filter:blur(18px);
+      background:rgba(255,255,255,.84);
+      border-bottom:1px solid rgba(220,235,241,.8);
+    }
+    .nav{height:78px;display:flex;align-items:center;justify-content:space-between;gap:22px}
+    .brand{display:flex;align-items:center;gap:12px;font-weight:950;font-size:1.55rem;letter-spacing:-.04em;color:var(--navy)}
+    .brand span span{color:var(--cyan)}
+    .logo{
+      width:52px;height:52px;border-radius:17px;display:grid;place-items:center;
+      background:linear-gradient(135deg,var(--navy),var(--cyan));
+      box-shadow:0 10px 24px rgba(16,184,200,.24);
+      position:relative;overflow:hidden;
+    }
+    .logo:before{content:"";position:absolute;width:42px;height:24px;border:5px solid #fff;border-bottom:0;border-radius:24px 24px 0 0;top:9px;opacity:.94}
+    .logo:after{content:"⚡";position:absolute;color:var(--orange);font-size:1.35rem;font-weight:900;top:22px;text-shadow:0 1px 0 rgba(0,0,0,.18)}
+    .logo .pad{width:30px;height:18px;border-radius:8px;background:#fff;position:absolute;bottom:9px;box-shadow:inset 0 -3px 0 rgba(7,26,47,.1)}
+    .logo .pad:before{content:"+";position:absolute;left:6px;top:-2px;color:var(--navy);font-weight:900;font-size:1rem}
+    .logo .pad:after{content:"";position:absolute;right:6px;top:7px;width:5px;height:5px;border-radius:50%;background:var(--lime);box-shadow:7px 0 0 var(--cyan),3px -5px 0 var(--purple)}
+    .links{display:flex;align-items:center;gap:26px;font-weight:800;color:#1c2d40;font-size:.96rem}
+    .links a{opacity:.86}.links a:hover{opacity:1;color:var(--cyan)}
+    .nav-actions{display:flex;align-items:center;gap:12px}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;border:0;border-radius:15px;padding:13px 18px;font-weight:900;cursor:pointer;transition:.18s transform,.18s box-shadow,.18s filter;white-space:nowrap}
+    .btn:hover{transform:translateY(-2px);filter:brightness(1.03)}
+    .btn-primary{color:#fff;background:linear-gradient(135deg,var(--cyan),#0a8fc0);box-shadow:0 12px 24px rgba(16,184,200,.25)}
+    .btn-dark{color:#fff;background:linear-gradient(135deg,var(--navy),var(--navy-2));box-shadow:0 12px 24px rgba(7,26,47,.18)}
+    .btn-soft{background:#fff;border:1px solid var(--line);box-shadow:0 10px 24px rgba(7,26,47,.08)}
+
+    .hero{position:relative;padding:78px 0 34px;overflow:hidden}
+    .hero-grid{display:grid;grid-template-columns:1fr 1.05fr;gap:44px;align-items:center}
+    .eyebrow{display:inline-flex;align-items:center;gap:9px;padding:8px 12px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.82);box-shadow:0 8px 20px rgba(7,26,47,.06);font-weight:900;color:var(--teal);font-size:.9rem}
+    .dot{width:9px;height:9px;border-radius:50%;background:var(--lime);box-shadow:0 0 0 5px rgba(155,216,15,.15)}
+    h1{font-size:clamp(3.1rem,7vw,6rem);line-height:.95;margin:22px 0 18px;letter-spacing:-.075em;color:var(--navy)}
+    h1 .accent{color:var(--cyan)}
+    .lead{font-size:clamp(1.05rem,2vw,1.25rem);line-height:1.55;color:var(--muted);max-width:650px;margin:0 0 28px;font-weight:650}
+    .hero-actions{display:flex;gap:14px;flex-wrap:wrap;margin:0 0 28px}
+    .mini-trust{display:flex;gap:16px;flex-wrap:wrap;color:var(--muted);font-weight:800;font-size:.92rem}
+    .mini-trust span{display:flex;align-items:center;gap:8px}.mini-trust b{color:var(--navy)}
+
+    .dashboard-wrap{position:relative;min-height:480px}
+    .dashboard{
+      position:relative;z-index:2;background:#fff;border:1px solid var(--line);border-radius:30px;box-shadow:var(--shadow);overflow:hidden;
+      transform:perspective(1000px) rotateY(-5deg) rotateX(2deg);
+    }
+    .dash-head{height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#fff,#f8fcfd)}
+    .dash-title{font-weight:950;color:var(--navy)}
+    .avatar{display:flex;align-items:center;gap:10px;font-size:.82rem;font-weight:850;color:var(--muted)}
+    .face{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,var(--cyan),var(--lime));color:#fff;font-weight:950}
+    .dash-body{display:grid;grid-template-columns:190px 1fr;min-height:410px}
+    .side{background:linear-gradient(180deg,var(--navy),#082f4a);padding:18px 14px;color:#d9eef4}
+    .side-logo{display:flex;align-items:center;gap:9px;font-weight:950;margin-bottom:18px}.side-logo i{width:30px;height:30px;border-radius:10px;background:var(--cyan);display:inline-grid;place-items:center;font-style:normal;color:#fff}
+    .side a{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:12px;color:#d9eef4;font-weight:800;font-size:.86rem;margin:4px 0}
+    .side a.active{background:linear-gradient(135deg,var(--cyan),#0793b3);color:#fff}
+    .main{padding:18px;background:#f8fcfd}
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+    .stat,.panel{background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px;box-shadow:0 8px 18px rgba(7,26,47,.05)}
+    .stat small{display:block;color:var(--muted);font-weight:850;font-size:.72rem}.stat b{display:block;color:var(--navy);font-size:1.45rem;margin-top:6px}.up{color:#13a66b;font-weight:950;font-size:.78rem}
+    .panels{display:grid;grid-template-columns:1.15fr .85fr;gap:14px}
+    .panel h3{margin:0 0 12px;color:var(--navy);font-size:.95rem}.row{display:flex;align-items:center;gap:10px;margin:12px 0}.badge{width:34px;height:34px;border-radius:12px;display:grid;place-items:center;color:#fff;font-weight:950}.bio{background:#11a66a}.chem{background:#ff9b2d}.info{background:#7464ff}.bar{flex:1;height:9px;background:#e9f3f6;border-radius:999px;overflow:hidden}.bar i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--cyan),var(--lime))}.row span{font-size:.8rem;color:var(--muted);font-weight:850}.tag{font-size:.72rem;font-weight:950;border-radius:999px;padding:5px 8px;background:#e8fbf0;color:#0f9b5c;margin-left:auto}
+    .orb{position:absolute;inset:auto 0 10px auto;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,var(--cyan-2),transparent 68%);opacity:.22;filter:blur(4px)}
+
+    .feature-strip{padding:26px 0}.features{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}.feature{background:#fff;border:1px solid var(--line);border-radius:22px;padding:20px;box-shadow:0 10px 24px rgba(7,26,47,.07);display:flex;gap:14px;align-items:flex-start}.icon{width:48px;height:48px;border-radius:16px;display:grid;place-items:center;color:#fff;font-size:1.25rem;font-weight:950;flex:0 0 auto}.c1{background:linear-gradient(135deg,var(--cyan),#087aa9)}.c2{background:linear-gradient(135deg,var(--lime),#64b000)}.c3{background:linear-gradient(135deg,var(--purple),#4f46e5)}.c4{background:linear-gradient(135deg,#0ea5e9,var(--cyan))}.feature h3{margin:0 0 5px;color:var(--navy);font-size:1rem}.feature p{margin:0;color:var(--muted);font-weight:650;font-size:.9rem;line-height:1.35}
+
+    section{padding:56px 0}.section-head{display:flex;align-items:end;justify-content:space-between;gap:20px;margin-bottom:24px}.section-head h2{font-size:clamp(2rem,4vw,3rem);line-height:1;margin:0;color:var(--navy);letter-spacing:-.045em}.section-head p{margin:8px 0 0;color:var(--muted);font-weight:700}.link{color:var(--cyan);font-weight:950}
+    .game-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.game{position:relative;min-height:220px;border-radius:28px;overflow:hidden;padding:24px;color:#fff;box-shadow:var(--shadow);display:flex;flex-direction:column;justify-content:space-between}.game:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 75% 20%,rgba(255,255,255,.28),transparent 34%)}.game>*{position:relative}.g1{background:linear-gradient(135deg,#064e3b,#12a66a)}.g2{background:linear-gradient(135deg,#182554,#a444ff)}.g3{background:linear-gradient(135deg,#05223d,#0aa6c8)}.game h3{font-size:2rem;margin:0 0 3px;letter-spacing:-.04em}.game p{margin:0;font-weight:850;opacity:.9}.game .emoji{font-size:4.2rem;filter:drop-shadow(0 10px 18px rgba(0,0,0,.2))}.game .play{align-self:flex-start;background:#fff;color:var(--navy);border-radius:999px;padding:9px 16px;font-weight:950}
+
+    .split{display:grid;grid-template-columns:1.1fr .9fr;gap:26px;align-items:stretch}.steps,.trust{background:#fff;border:1px solid var(--line);border-radius:30px;padding:28px;box-shadow:0 14px 36px rgba(7,26,47,.08)}.step-row{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:20px}.step{text-align:center}.step-icon{width:76px;height:76px;margin:0 auto 14px;border-radius:26px;display:grid;place-items:center;background:#eefbfe;color:var(--cyan);font-size:2rem;font-weight:950;border:1px solid var(--line)}.step b{display:block;color:var(--navy);font-size:1.05rem;margin-bottom:5px}.step p{margin:0;color:var(--muted);font-size:.88rem;font-weight:650;line-height:1.4}.trust-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:20px 0}.trust-card{background:var(--soft);border:1px solid var(--line);border-radius:20px;padding:18px;text-align:center}.trust-card b{display:block;color:var(--navy);font-size:1.8rem;letter-spacing:-.04em}.trust-card span{color:var(--muted);font-weight:800;font-size:.88rem}.safe{display:flex;align-items:center;gap:9px;color:#11845b;font-weight:900;font-size:.92rem}
+
+    .footer{background:linear-gradient(135deg,var(--navy),#062840);color:#d8eaf0;border-radius:30px 30px 0 0;margin-top:36px;padding:38px 0}.foot-grid{display:grid;grid-template-columns:1.4fr repeat(4,1fr);gap:28px}.footer .brand{color:#fff}.footer p,.footer a{color:#b8cbd4;font-weight:700;font-size:.92rem}.footer h4{margin:0 0 12px;color:#fff}.footer a{display:block;margin:7px 0}.footer a:hover{color:#fff}
+
+    @media(max-width:960px){.links{display:none}.hero-grid,.split{grid-template-columns:1fr}.dashboard-wrap{min-height:auto}.dashboard{transform:none}.features,.game-grid{grid-template-columns:1fr 1fr}.stats{grid-template-columns:repeat(2,1fr)}.foot-grid{grid-template-columns:1fr 1fr}.dash-body{grid-template-columns:1fr}.side{display:none}}
+    @media(max-width:640px){.nav{height:auto;padding:12px 0;align-items:flex-start}.nav-actions{display:none}h1{font-size:3.2rem}.features,.game-grid,.step-row,.trust-grid,.stats,.panels{grid-template-columns:1fr}.hero{padding-top:42px}.foot-grid{grid-template-columns:1fr}.section-head{display:block}.brand{font-size:1.25rem}.logo{width:44px;height:44px}}
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <nav class="nav wrap" aria-label="Hauptnavigation">
+      <a class="brand" href="landing.html" aria-label="SchoolClash Startseite">
+        <span class="logo"><span class="pad"></span></span>
+        <span>School<span>Clash</span></span>
+      </a>
+      <div class="links">
+        <a href="#funktionen">Funktionen</a>
+        <a href="#spiele">Spiele</a>
+        <a href="#lehrkraefte">Für Lehrkräfte</a>
+        <a href="#schulen">Für Schulen</a>
+        <a href="/index.html">Login</a>
+      </div>
+      <div class="nav-actions">
+        <a class="btn btn-primary" href="/index.html">Jetzt starten →</a>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="wrap hero-grid">
+        <div>
+          <div class="eyebrow"><span class="dot"></span> Cloud-Plattform für Lernspiele</div>
+          <h1>Lernen wird<br>zum <span class="accent">Clash.</span></h1>
+          <p class="lead">Motivierende Lernspiele, spannende Klassen-Challenges und einfache Schüler- und Lehrerverwaltung – alles in einer sicheren Cloud-Plattform.</p>
+          <div class="hero-actions">
+            <a class="btn btn-dark" href="#spiele">▶ Demo ansehen</a>
+            <a class="btn btn-primary" href="/index.html">Kostenlos starten →</a>
+          </div>
+          <div class="mini-trust">
+            <span>🛡️ <b>DSGVO-orientiert</b></span>
+            <span>⚡ <b>iPad- & Browser-ready</b></span>
+            <span>☁️ <b>Cloud-Zugänge</b></span>
+          </div>
+        </div>
+
+        <div class="dashboard-wrap" aria-label="Dashboard Vorschau">
+          <div class="orb"></div>
+          <div class="dashboard">
+            <div class="dash-head">
+              <div class="dash-title">Übersicht</div>
+              <div class="avatar"><span>🔔</span><span class="face">M</span><span>Herr Müller<br><small>Lehrkraft</small></span></div>
+            </div>
+            <div class="dash-body">
+              <aside class="side">
+                <div class="side-logo"><i>SC</i> SchoolClash</div>
+                <a class="active" href="#">▣ Dashboard</a>
+                <a href="#">👥 Klassen</a>
+                <a href="#">🎮 Spiele</a>
+                <a href="#">🏆 Challenges</a>
+                <a href="#">🧑‍🎓 Schüler</a>
+                <a href="#">👩‍🏫 Lehrkräfte</a>
+                <a href="#">📊 Berichte</a>
+              </aside>
+              <div class="main">
+                <div class="stats">
+                  <div class="stat"><small>Punkte gesamt</small><b>12.450</b><span class="up">+12%</span></div>
+                  <div class="stat"><small>Aktive Klassen</small><b>24</b><span class="up">+3</span></div>
+                  <div class="stat"><small>Missionen</small><b>156</b><span class="up">+18%</span></div>
+                  <div class="stat"><small>Platzierung</small><b>1.</b><span>Schulrang</span></div>
+                </div>
+                <div class="panels">
+                  <div class="panel">
+                    <h3>Klassen-Fortschritt</h3>
+                    <div class="row"><div class="badge bio">8a</div><div class="bar"><i style="width:82%"></i></div><span>82%</span></div>
+                    <div class="row"><div class="badge chem">7b</div><div class="bar"><i style="width:66%"></i></div><span>66%</span></div>
+                    <div class="row"><div class="badge info">9c</div><div class="bar"><i style="width:42%"></i></div><span>42%</span></div>
+                  </div>
+                  <div class="panel">
+                    <h3>Aktuelle Challenges</h3>
+                    <div class="row"><div class="badge bio">B</div><span>Biologie: Zell-Challenge</span><em class="tag">Aktiv</em></div>
+                    <div class="row"><div class="badge chem">C</div><span>Chemie: Reaktions-Race</span><em class="tag">Aktiv</em></div>
+                    <div class="row"><div class="badge info">I</div><span>Informatik: Code Quest</span><em class="tag">Aktiv</em></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="funktionen" class="feature-strip">
+      <div class="wrap features">
+        <article class="feature"><div class="icon c1">🎮</div><div><h3>Lernspiele</h3><p>Interaktive Spiele in vielen Fächern. Spaß beim Lernen garantiert.</p></div></article>
+        <article class="feature"><div class="icon c2">🏆</div><div><h3>Klassen-Challenges</h3><p>Tretet als Klasse an und sammelt Punkte für die Rangliste.</p></div></article>
+        <article class="feature"><div class="icon c3">👥</div><div><h3>Schüler- & Lehrerkonten</h3><p>Einfache Verwaltung von Konten, Rollen und Berechtigungen.</p></div></article>
+        <article class="feature"><div class="icon c4">☁️</div><div><h3>Cloud-Synchronisierung</h3><p>Sicher, schnell und überall verfügbar – direkt im Browser.</p></div></article>
+      </div>
+    </section>
+
+    <section id="spiele">
+      <div class="wrap">
+        <div class="section-head">
+          <div><h2>Beliebte Lernspiele</h2><p>Direkter Einstieg in Fächer, Missionen und Challenges.</p></div>
+          <a class="link" href="/index.html">Alle Spiele ansehen →</a>
+        </div>
+        <div class="game-grid">
+          <article class="game g1"><div><h3>Biologie</h3><p>Zell-Challenge</p></div><div class="emoji">🧬</div><a class="play" href="/games/biologie8/">Spielen</a></article>
+          <article class="game g2"><div><h3>Chemie</h3><p>Reaktions-Race</p></div><div class="emoji">⚗️</div><a class="play" href="/games/chemie8/">Spielen</a></article>
+          <article class="game g3"><div><h3>Informatik</h3><p>Code Quest</p></div><div class="emoji">🤖</div><a class="play" href="/games/algorithmen7/">Spielen</a></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="lehrkraefte">
+      <div class="wrap split">
+        <div class="steps">
+          <div class="section-head"><div><h2>So funktioniert’s</h2><p>In wenigen Schritten zur eigenen Klassen-Challenge.</p></div></div>
+          <div class="step-row">
+            <div class="step"><div class="step-icon">1</div><b>Klasse anlegen</b><p>Lege deine Klasse an und lade Schüler:innen einfach ein.</p></div>
+            <div class="step"><div class="step-icon">🚀</div><b>Mission starten</b><p>Wähle ein Spiel oder starte eine spannende Challenge.</p></div>
+            <div class="step"><div class="step-icon">📈</div><b>Fortschritt verfolgen</b><p>Behalte Ergebnisse und Fortschritte in Echtzeit im Blick.</p></div>
+          </div>
+        </div>
+        <div id="schulen" class="trust">
+          <h2>Für Lehrkräfte und Schulen</h2>
+          <p class="lead" style="font-size:1rem;margin-top:10px">SchoolClash wächst mit: von der einzelnen Klasse bis zur Schulplattform mit Rollen, Konten und übersichtlichen Auswertungen.</p>
+          <div class="trust-grid">
+            <div class="trust-card"><b>1.250+</b><span>Klassen möglich</span></div>
+            <div class="trust-card"><b>85k+</b><span>Spieler:innen</span></div>
+            <div class="trust-card"><b>320k+</b><span>Missionen</span></div>
+          </div>
+          <div class="safe">✓ DSGVO-orientiert · sicher gehostet · browserbasiert</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap foot-grid">
+      <div>
+        <div class="brand"><span class="logo"><span class="pad"></span></span><span>School<span>Clash</span></span></div>
+        <p>Die Cloud-Plattform für Lernspiele, Klassen-Challenges und Schulverwaltung.</p>
+      </div>
+      <div><h4>Produkt</h4><a href="#funktionen">Funktionen</a><a href="#spiele">Spiele</a><a href="/index.html">Login</a></div>
+      <div><h4>Für Lehrkräfte</h4><a href="/lehrer.html">Lehrerbereich</a><a href="#lehrkraefte">Übersicht</a><a href="#spiele">Ressourcen</a></div>
+      <div><h4>Für Schulen</h4><a href="#schulen">Lösungen</a><a href="#funktionen">Cloud</a><a href="mailto:lucasmerbreier@gmail.com">Kontakt</a></div>
+      <div><h4>Rechtliches</h4><a href="#">Datenschutz</a><a href="#">Impressum</a><a href="#">AGB</a></div>
+    </div>
+  </footer>
+</body>
+</html>
