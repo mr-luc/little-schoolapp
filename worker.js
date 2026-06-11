@@ -23,6 +23,7 @@ const GAMES = [
   { id: 'chemie8', title: 'Little Chemie 8' },
   { id: 'biologie8', title: 'Bio-Alchemie (Biologie 8)' },
   { id: 'informatik7', title: 'Informatik Alchemie (Klasse 7)' },
+  { id: 'algorithmen7', title: 'Little Algorithmen 7 – Rette Roboter Algo' },
 ];
 const DEFAULT_GAME = 'chemie8';
 const gameAllowed = (g) => GAMES.some((x) => x.id === g);

@@ -1,0 +1,200 @@
+.repair-bay {
+  display: grid;
+  grid-template-columns: minmax(260px, 390px) 1fr;
+  gap: 22px;
+  align-items: center;
+  margin: 18px 0;
+  padding: 22px;
+  border-radius: 26px;
+  background: rgba(255, 255, 255, .9);
+  border: 1px solid #d9e7fa;
+  box-shadow: 0 10px 34px rgba(19, 55, 107, .11);
+}
+
+.repair-stage {
+  min-height: 320px;
+  display: grid;
+  place-items: center;
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 50% 30%, rgba(255, 209, 102, .26), transparent 28%),
+    linear-gradient(160deg, #eef6ff, #ffffff 72%);
+  border: 2px dashed #bdd5f7;
+  overflow: hidden;
+}
+
+.repair-info h2 {
+  margin: 0;
+  font-size: clamp(1.6rem, 4vw, 2.6rem);
+  letter-spacing: -0.04em;
+}
+
+.repair-info p {
+  line-height: 1.55;
+}
+
+.repair-meter {
+  height: 18px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #dceafd;
+  border: 1px solid #c9ddfb;
+  margin: 16px 0 8px;
+}
+
+.repair-meter > div {
+  width: 0%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--blue), #42b883, var(--yellow));
+  transition: width .55s ease;
+}
+
+.repair-count {
+  margin: 0;
+  font-weight: 900;
+  color: var(--blue-dark);
+}
+
+.repair-svg {
+  width: min(100%, 360px);
+  height: auto;
+  overflow: visible;
+}
+
+.repair-shadow ellipse {
+  fill: rgba(20, 33, 61, .12);
+}
+
+.repair-part {
+  opacity: .18;
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: opacity .35s ease, transform .55s cubic-bezier(.2, .8, .2, 1), filter .35s ease;
+}
+
+.repair-part rect,
+.repair-part circle,
+.repair-part path {
+  fill: #f9fbff;
+  stroke: #2364d2;
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.repair-part .inner {
+  fill: #d8ecff;
+  stroke-width: 4;
+}
+
+.repair-part .panel {
+  fill: #eaf4ff;
+}
+
+.repair-part .eye {
+  fill: #2364d2;
+  stroke-width: 3;
+}
+
+.repair-part .mouth {
+  fill: none;
+  stroke: #1b9b63;
+  stroke-width: 6;
+}
+
+.repair-part .antenna-dot {
+  fill: #ffd166;
+}
+
+.repair-part .core {
+  fill: #ffd166;
+  stroke: #1b9b63;
+}
+
+.repair-part .core-glow {
+  fill: rgba(255, 209, 102, .38);
+  stroke: rgba(27, 155, 99, .7);
+  filter: url(#repairGlow);
+}
+
+.repair-part .energy-lines,
+.repair-part .complete-arc {
+  fill: none;
+  stroke: #1b9b63;
+}
+
+.repair-part .online-text {
+  fill: #1b9b63;
+  font: 900 18px system-ui, sans-serif;
+  letter-spacing: .06em;
+}
+
+.repair-part.p1 { transform: translateY(18px) rotate(-2deg); }
+.repair-part.p2 { transform: translate(-48px, 18px) rotate(-18deg); }
+.repair-part.p3 { transform: translate(48px, 18px) rotate(18deg); }
+.repair-part.p4 { transform: translateY(-38px) rotate(4deg); }
+.repair-part.p5 { transform: scale(.5) translateY(20px); }
+.repair-part.p6 { transform: translate(-80px, -14px) rotate(-22deg); }
+.repair-part.p7 { transform: translate(80px, -14px) rotate(22deg); }
+.repair-part.p8 { transform: translate(-92px, 42px) rotate(20deg); }
+.repair-part.p9 { transform: translate(92px, 42px) rotate(-20deg); }
+.repair-part.p10 { transform: translateY(-70px) scale(.6); }
+.repair-part.p11 { transform: translateY(-85px) rotate(-6deg); }
+.repair-part.p12 { transform: scale(.2); }
+.repair-part.p13 { transform: scale(.2); }
+.repair-part.p14 { transform: translateY(24px) scale(.4); }
+.repair-part.p15 { transform: translateY(-70px) scale(.4); }
+.repair-part.p16 { transform: translate(-80px, -40px) scale(.55); }
+.repair-part.p17 { transform: translate(80px, -40px) scale(.55); }
+.repair-part.p18 { transform: scale(.1); }
+.repair-part.p19 { transform: scale(.2); }
+.repair-part.p20 { transform: translateY(-12px) scale(.7); }
+
+.repair-part.active {
+  opacity: 1;
+  transform: translate(0, 0) rotate(0deg) scale(1);
+  animation: part-installed .55s cubic-bezier(.2, .8, .2, 1) both;
+}
+
+.repair-svg.complete .repair-part.active {
+  filter: drop-shadow(0 0 8px rgba(27, 155, 99, .25));
+}
+
+.repair-svg.complete .p12,
+.repair-svg.complete .p13,
+.repair-svg.complete .p15,
+.repair-svg.complete .p18,
+.repair-svg.complete .p19 {
+  animation: system-online 1.5s ease-in-out infinite;
+}
+
+@keyframes part-installed {
+  0% {
+    opacity: .18;
+  }
+  70% {
+    opacity: 1;
+    filter: drop-shadow(0 0 14px rgba(255, 209, 102, .85));
+  }
+  100% {
+    opacity: 1;
+    filter: none;
+  }
+}
+
+@keyframes system-online {
+  0%, 100% { filter: drop-shadow(0 0 4px rgba(255, 209, 102, .45)); }
+  50% { filter: drop-shadow(0 0 13px rgba(255, 209, 102, .95)); }
+}
+
+@media (max-width: 780px) {
+  .repair-bay {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .repair-stage {
+    min-height: 280px;
+  }
+}
