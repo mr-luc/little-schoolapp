@@ -82,33 +82,25 @@ const classGame = (cls) => {
 };
 
 // Pseudonyme Login-Namen erzeugen (eindeutig je Klasse, fortlaufend nummeriert).
-// Die Wortreihenfolge wird aus dem Klassencode deterministisch gemischt, damit
-// nicht alle Klassen mit denselben Namen (Argon-01, Helium-02 …) starten.
+// Format: <Wort>-<Klassencode>-<Zufallszahl>, z. B. "Argon-w8a-073". So sieht man
+// dem Login direkt die Klasse an und keine zwei Klassen teilen sich Login-Namen.
 const NAMEWORDS = ['Argon', 'Helium', 'Neon', 'Krypton', 'Xenon', 'Eisen', 'Kupfer', 'Zink', 'Gold', 'Silber', 'Natrium', 'Kalium', 'Calcium', 'Magnesium', 'Kohlenstoff', 'Sauerstoff', 'Stickstoff', 'Schwefel', 'Chlor', 'Jod', 'Lithium', 'Nickel', 'Platin', 'Titan', 'Bor', 'Brom', 'Fluor', 'Radon', 'Cobalt', 'Zinn'];
-function codeHash(code) {
-  let h = 2166136261 >>> 0;
-  const s = norm(code);
-  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
-  return h || 1;
-}
-function shuffledWords(code) {
-  const a = NAMEWORDS.slice();
-  let h = codeHash(code);
-  for (let i = a.length - 1; i > 0; i--) {
-    h = Math.imul(h, 16807) >>> 0;
-    const j = h % (i + 1);
-    const t = a[i]; a[i] = a[j]; a[j] = t;
-  }
-  return a;
-}
+const randSuffix = () => String(100 + Math.floor(Math.random() * 900)); // 100–999
 function genSlots(existing, count, code) {
-  const words = code ? shuffledWords(code) : NAMEWORDS;
+  const used = new Set((existing || []).map((n) => norm(n)));
   const out = [];
+  const c = norm(code);
   const start = existing.length;
   for (let i = 0; i < count; i++) {
-    const idx = start + i;
-    const word = words[idx % words.length];
-    out.push(`${word}-${String(idx + 1).padStart(2, '0')}`);
+    const word = NAMEWORDS[(start + i) % NAMEWORDS.length];
+    let name;
+    // Bei Kollision (gleiches Wort+Suffix bereits in der Klasse) neu würfeln.
+    for (let tries = 0; tries < 60; tries++) {
+      name = c ? `${word}-${c}-${randSuffix()}` : `${word}-${String(start + i + 1).padStart(2, '0')}`;
+      if (!used.has(norm(name))) break;
+    }
+    used.add(norm(name));
+    out.push(name);
   }
   return out;
 }
