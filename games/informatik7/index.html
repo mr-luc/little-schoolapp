@@ -13,8 +13,11 @@
     <div class="hbtns">
       <span id="level">Level 1: Grundlagen</span>
       <span id="cnt">4 / 57</span>
+      <span id="coins">🪙 5</span>
+      <span id="combo" hidden></span>
       <button class="hbtn" id="account" hidden title="Abmelden"></button>
-      <button class="hbtn" onclick="hint()" title="Tipp">💡</button>
+      <button class="hbtn" onclick="hint()" title="Tipp kaufen (3🪙)">💡</button>
+      <button class="hbtn" onclick="quiz()" title="Informatik-Blitz (Quiz)">🎮</button>
       <button class="hbtn" onclick="openLex()" title="Lexikon">📖</button>
       <button class="hbtn" id="soundBtn" onclick="toggleAudio()" title="Ton an/aus">🔇</button>
     </div>
@@ -45,6 +48,17 @@
       <div class="panel-h"><b>📖 Lexikon</b><button onclick="closeLex()">✕</button></div>
       <div id="lexbody" class="panel-body"></div>
       <div class="panel-foot"><button class="danger" onclick="resetGame()">🔄 Spiel zurücksetzen</button></div>
+    </div>
+  </div>
+
+  <div id="game" class="modal">
+    <div class="panel">
+      <div class="panel-h"><b>🎮 Informatik-Blitz</b><button onclick="closeGame()">✕</button></div>
+      <div class="panel-body">
+        <div id="gs" class="quiz-status"></div>
+        <div id="gq" class="quiz-q"></div>
+        <div id="ga" class="quiz-answers"></div>
+      </div>
     </div>
   </div>
 
