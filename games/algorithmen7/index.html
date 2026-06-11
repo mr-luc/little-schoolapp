@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Little Algorithmen 7 – Rette Roboter Algo</title>
+  <meta name="description" content="Ein Lernspiel mit 20 Missionen zu Algorithmen und Flussdiagrammen für Klasse 7." />
+  <link rel="stylesheet" href="style.css?v=1" />
+  <link rel="stylesheet" href="repair.css?v=1" />
+  <!-- Portal-Anbindung (Login-Gate + Cloud-Sync) muss VOR dem Spiel laden. -->
+  <script src="portal.js?v=1"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="hero">
+      <div class="robot repair-preview" aria-hidden="true">
+        <svg viewBox="0 0 160 160" role="img">
+          <rect x="38" y="46" width="84" height="76" rx="18" class="bot-head" />
+          <rect x="55" y="119" width="50" height="18" rx="8" class="bot-neck" />
+          <circle cx="64" cy="80" r="9" class="bot-eye" />
+          <circle cx="96" cy="80" r="9" class="bot-eye" />
+          <path d="M62 101 Q80 113 98 101" class="bot-mouth" />
+          <path d="M80 45 V25" class="bot-line" />
+          <circle cx="80" cy="21" r="8" class="bot-dot" />
+          <path d="M38 76 H24 M122 76 H136" class="bot-line" />
+          <circle cx="22" cy="76" r="6" class="bot-dot" />
+          <circle cx="138" cy="76" r="6" class="bot-dot" />
+        </svg>
+      </div>
+      <div>
+        <p class="eyebrow">Little Algorithmen 7</p>
+        <h1>Rette Roboter Algo</h1>
+        <p class="subtitle">Übe Symbole, Sequenz, Selektion, Iteration und Flussdiagramme für den Test.</p>
+        <p class="hero-story"><strong>Notfallmeldung:</strong> Algo ist in seine Einzelteile zerlegt. Mit jeder richtigen Mission wird ein Bauteil repariert. Erst wenn er vollständig zusammengesetzt ist, kann er den Boss-Test bestehen.</p>
+        <div class="chips" aria-label="Themen">
+          <span>Sequenz</span>
+          <span>Selektion</span>
+          <span>Iteration</span>
+          <span>Klasse 7 · M-Niveau</span>
+        </div>
+      </div>
+    </header>
+
+    <section class="repair-bay" aria-label="Reparaturfortschritt von Roboter Algo">
+      <div class="repair-stage" id="repairRobot" aria-hidden="true"></div>
+      <div class="repair-info">
+        <p class="eyebrow">Reparaturstation</p>
+        <h2>Setze Algo wieder zusammen</h2>
+        <p id="repairText">Algo ist noch defekt. Starte Mission 1 und repariere das erste Bauteil.</p>
+        <div class="repair-meter" aria-hidden="true">
+          <div id="repairMeterFill"></div>
+        </div>
+        <p class="repair-count" id="repairCount">Repariert: 0 von 20 Bauteilen</p>
+      </div>
+    </section>
+
+    <section class="status-card" aria-label="Spielstand">
+      <div>
+        <span class="small-label">Mission</span>
+        <strong id="missionCounter">1 von 20</strong>
+      </div>
+      <div id="progressWrap" class="progress-wrap" role="progressbar" aria-label="Reparaturfortschritt" aria-valuemin="0" aria-valuemax="20" aria-valuenow="0">
+        <div id="progressBar" class="progress-bar"></div>
+      </div>
+      <div>
+        <span class="small-label">Energie</span>
+        <strong id="scoreCounter">0</strong>
+      </div>
+    </section>
+
+    <main id="game" class="game-card" tabindex="-1"></main>
+
+    <footer class="footer-actions">
+      <button id="resetButton" class="ghost-button" type="button">Neu starten</button>
+      <span>GitHub-Pages-Spiel für den Informatikunterricht</span>
+    </footer>
+  </div>
+
+  <template id="confettiTemplate">
+    <span class="spark s1">✦</span>
+    <span class="spark s2">✶</span>
+    <span class="spark s3">✹</span>
+    <span class="spark s4">✦</span>
+    <span class="spark s5">✶</span>
+    <span class="spark s6">✦</span>
+    <span class="spark s7">✹</span>
+    <span class="spark s8">✦</span>
+  </template>
+
+  <script src="script.js?v=1"></script>
+  <script src="mission4-fix.js?v=1"></script>
+  <script src="repair.js?v=1"></script>
+</body>
+</html>
