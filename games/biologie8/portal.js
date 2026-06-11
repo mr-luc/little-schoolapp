@@ -59,6 +59,18 @@
   }
   function schedulePush() { if (syncing) return; clearTimeout(pushTimer); pushTimer = setTimeout(push, 800); }
 
+  // Präsenz-Heartbeat: meldet regelmäßig „online" fürs Live-Ranking der Lehrkraft.
+  function heartbeat() {
+    try {
+      fetch('/api/presence', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: ident.code, name: ident.name, game: GAME, pw: ident.pw || '' })
+      }).catch(function () {});
+    } catch (e) {}
+  }
+  heartbeat();
+  setInterval(heartbeat, 20000);
+
   // localStorage.setItem überwachen, um Spielstand-Schreibvorgänge zu erkennen.
   var origSet = localStorage.setItem.bind(localStorage);
   try {

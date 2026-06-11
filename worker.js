@@ -155,11 +155,16 @@ export class ClassLive {
       let body; try { body = await request.json(); } catch (e) { return new Response('bad', { status: 400 }); }
       const name = String((body && body.name) || '');
       if (!name) return new Response('bad', { status: 400 });
-      await this.state.storage.put('s:' + name, body);
+      // /ping: nur Präsenz (online), ohne Punktestand. Sonst: Spielstand +
+      // Präsenz (ein gespeicherter Stand zählt natürlich auch als "online").
+      await this.state.storage.put('p:' + name, { name, t: Date.now() });
+      if (url.pathname !== '/ping') await this.state.storage.put('s:' + name, body);
       return new Response('ok');
     }
-    const map = await this.state.storage.list({ prefix: 's:' });
-    return new Response(JSON.stringify([...map.values()]), { headers: { 'Content-Type': 'application/json' } });
+    const all = await this.state.storage.list();
+    const scores = [], online = [];
+    for (const [k, v] of all) { if (k.startsWith('s:')) scores.push(v); else if (k.startsWith('p:')) online.push(v); }
+    return new Response(JSON.stringify({ scores, online }), { headers: { 'Content-Type': 'application/json' } });
   }
 }
 // Ein DO je Klasse+Spiel; bei fehlendem Binding läuft alles weiter über KV.
@@ -170,12 +175,17 @@ const liveStub = (env, code, game) => {
 async function livePush(env, code, game, entry) {
   const stub = liveStub(env, code, game);
   if (!stub) return;
-  try { await stub.fetch('https://live/', { method: 'POST', body: JSON.stringify(entry) }); } catch (e) {}
+  try { await stub.fetch('https://live/score', { method: 'POST', body: JSON.stringify(entry) }); } catch (e) {}
 }
-async function liveList(env, code, game) {
+async function livePing(env, code, game, name) {
   const stub = liveStub(env, code, game);
-  if (!stub) return [];
-  try { const r = await stub.fetch('https://live/'); return r.ok ? await r.json() : []; } catch (e) { return []; }
+  if (!stub) return;
+  try { await stub.fetch('https://live/ping', { method: 'POST', body: JSON.stringify({ name }) }); } catch (e) {}
+}
+async function liveData(env, code, game) {
+  const stub = liveStub(env, code, game);
+  if (!stub) return { scores: [], online: [] };
+  try { const r = await stub.fetch('https://live/'); return r.ok ? await r.json() : { scores: [], online: [] }; } catch (e) { return { scores: [], online: [] }; }
 }
 async function liveClear(env, code, game) {
   const stub = liveStub(env, code, game);
@@ -259,6 +269,25 @@ async function handleApi(request, env, url) {
       return json({ ok: true, game: assigned });
     }
     return json({ error: 'method-not-allowed' }, 405);
+  }
+
+  // ---- Präsenz-Heartbeat: meldet, dass ein:e Schüler:in gerade online ist ----
+  // (auch ohne Punktestand). Speist nur den Live-Cache (DO), nichts in KV.
+  if (p === '/api/presence') {
+    if (request.method !== 'POST') return json({ error: 'method-not-allowed' }, 405);
+    if (!env.PROGRESS) return json({ error: 'kv-not-bound' }, 500);
+    let body; try { body = await request.json(); } catch (e) { return json({ error: 'bad-json' }, 400); }
+    const { code, name, game, pw } = body || {};
+    if (!valid(code, name)) return json({ error: 'bad-params' }, 400);
+    const clsRaw = await env.PROGRESS.get(classKey(code));
+    if (!clsRaw) return json({ error: 'unknown-class' }, 403);
+    if (!nameAllowed(clsRaw, name)) return json({ error: 'unknown-name' }, 403);
+    const cls = JSON.parse(clsRaw);
+    if (!pwOk(cls, name, pw)) return json({ error: 'bad-pin' }, 403);
+    const assigned = classGame(cls);
+    if (game && norm(game) !== assigned) return json({ error: 'wrong-game', game: assigned }, 403);
+    await livePing(env, norm(code), assigned, norm(name));
+    return json({ ok: true });
   }
 
   // ---- Ab hier: Lehrer-/Admin-Bereich (Anmeldung nötig) ----
@@ -415,11 +444,11 @@ async function handleApi(request, env, url) {
           updated: s.updated || 0,
         });
       }
-      // Live-Stände aus dem DO einmischen: aktueller als die (bis zu 60 s
-      // gecachten) KV-Werte; neue Spieler:innen erscheinen sofort.
-      const live = await liveList(env, code, game);
+      // Live-Daten aus dem DO einmischen: Spielstände sind aktueller als die
+      // (bis zu 60 s gecachten) KV-Werte; Präsenz zeigt, wer gerade online ist.
+      const { scores, online } = await liveData(env, code, game);
       const byName = {}; students.forEach((s, i) => { byName[s.name] = i; });
-      for (const e of live) {
+      for (const e of (scores || [])) {
         if (!e || !e.name) continue;
         const row = {
           name: e.name,
@@ -432,8 +461,16 @@ async function handleApi(request, env, url) {
         if (i === undefined) byName[e.name] = students.push(row) - 1;
         else if ((row.updated || 0) >= (students[i].updated || 0)) students[i] = row;
       }
+      // Online-Status (zuletzt in den letzten 45 s gesehen). Online-Schüler:innen
+      // ohne Punktestand werden mit 0 ergänzt, damit sie im Ranking auftauchen.
+      const ONLINE_MS = 45000, now = Date.now(), onlineAt = {};
+      for (const o of (online || [])) { if (o && o.name && (now - (o.t || 0)) <= ONLINE_MS) onlineAt[o.name] = o.t || 0; }
+      for (const nm in onlineAt) {
+        if (byName[nm] === undefined) byName[nm] = students.push({ name: nm, entdeckt: 0, muenzen: 0, xp: 0, updated: onlineAt[nm] }) - 1;
+      }
+      students.forEach((s) => { s.online = !!onlineAt[s.name]; });
       students.sort((a, b) => b.xp - a.xp);
-      return json({ code, game, owner: cls && cls.owner || '', slots, pw: cls && cls.pw || {}, anzahl: students.length, students });
+      return json({ code, game, owner: cls && cls.owner || '', slots, pw: cls && cls.pw || {}, anzahl: students.length, online: Object.keys(onlineAt).length, students });
     }
   }
 

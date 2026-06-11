@@ -68,6 +68,8 @@
     .rk-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding-right:4px}
     .rk-row{display:flex;align-items:center;gap:clamp(8px,1.6vw,18px);background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:clamp(8px,1.3vw,15px) clamp(12px,2vw,22px);transition:transform .35s,background .35s}
     .rk-row.idle{opacity:.45}
+    .rk-row.online{box-shadow:inset 3px 0 0 #34d399}
+    .rk-on{display:inline-block;width:10px;height:10px;border-radius:50%;background:#34d399;margin-right:9px;vertical-align:middle;animation:rkPulse 1.6s infinite}
     .rk-row.top1{background:linear-gradient(135deg,rgba(245,196,30,.30),rgba(255,255,255,.06));border-color:rgba(245,196,30,.5)}
     .rk-row.top2{background:linear-gradient(135deg,rgba(203,213,225,.24),rgba(255,255,255,.05))}
     .rk-row.top3{background:linear-gradient(135deg,rgba(205,127,50,.26),rgba(255,255,255,.05))}
@@ -444,7 +446,8 @@
     // Login-Namen in Original-Schreibweise anzeigen (Stände sind kleingeschrieben).
     const disp={};slots.forEach(n=>{disp[n.toLowerCase()]=n});
     const total=slots.length||students.length;
-    o.querySelector('#rkSub').textContent=gameTitle(game)+' · sortiert nach '+mi.label+' · '+students.length+' von '+total+' aktiv · Stand '+new Date().toLocaleTimeString('de-DE');
+    const onlineCount=students.filter(s=>s.online).length;
+    o.querySelector('#rkSub').textContent=gameTitle(game)+' · sortiert nach '+mi.label+' · 🟢 '+onlineCount+' online · '+students.length+' von '+total+' gespielt · Stand '+new Date().toLocaleTimeString('de-DE');
     const val=s=>m==='entdeckt'?(s.entdeckt||0):m==='muenzen'?(s.muenzen||0):(s.xp||0);
     const sorted=students.slice().sort((a,b)=>val(b)-val(a)||(b.entdeckt||0)-(a.entdeckt||0)||(b.muenzen||0)-(a.muenzen||0));
     const list=o.querySelector('#rkList');
@@ -457,10 +460,11 @@
       if(prev!==undefined){if(prev>i+1){move='▲';cls='up'}else if(prev<i+1){move='▼';cls='down'}}
       const pos=i<3?medal[i]:(i+1)+'.';
       const meta='🧩 '+(s.entdeckt||0)+' · 🪙 '+(s.muenzen||0)+(anyXp?' · ⭐ '+(s.xp||0):'');
-      return '<div class="rk-row'+(i<3?' top'+(i+1):'')+'">'+
+      const dot=s.online?'<span class="rk-on" title="online"></span>':'';
+      return '<div class="rk-row'+(i<3?' top'+(i+1):'')+(s.online?' online':'')+'">'+
         '<div class="rk-pos">'+pos+'</div>'+
         '<div class="rk-move '+cls+'">'+move+'</div>'+
-        '<div class="rk-name">'+esc(disp[nm]||s.name||'?')+'</div>'+
+        '<div class="rk-name">'+dot+esc(disp[nm]||s.name||'?')+'</div>'+
         '<div class="rk-meta">'+meta+'</div>'+
         '<div class="rk-score">'+mi.icon+' '+val(s)+'</div>'+
       '</div>';
