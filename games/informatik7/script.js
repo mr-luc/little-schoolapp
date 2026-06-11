@@ -85,7 +85,23 @@ function setAccountUI(){const a=$('account');if(!a)return;if(cloudOn&&ident){a.h
 function logout(){localStorage.removeItem(IDENT);location.href='/'}
 // Präsenz-Heartbeat: meldet regelmäßig „online", auch ohne neue Entdeckung,
 // damit die Lehrkraft im Live-Ranking alle anwesenden Schüler:innen sieht.
-function heartbeat(){if(!cloudOn||!ident)return;try{fetch('/api/presence',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:ident.code,name:ident.name,game:GAME,pw:ident.pw||''})}).catch(()=>{})}catch(e){}}
+// Antwort 403 wrong-game = die Lehrkraft hat ein neues Spiel zugewiesen.
+function heartbeat(){if(!cloudOn||!ident)return;try{fetch('/api/presence',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:ident.code,name:ident.name,game:GAME,pw:ident.pw||''})}).then(r=>{if(r.status===403)r.json().then(j=>{if(j&&j.error==='wrong-game'&&j.game&&j.game!==GAME)offerGameSwitch(j.game)},()=>{})}).catch(()=>{})}catch(e){}}
+// Pop-up, wenn die Lehrkraft live ein anderes Spiel zuweist.
+let switchShown=false;
+async function gameTitleOf(id){try{const r=await fetch('/api/games');const d=await r.json();const g=(d.games||[]).find(x=>x.id===id);return g&&g.title?g.title:id}catch(e){return id}}
+function ensureSwitchCss(){if(document.getElementById('gsCss'))return;const s=document.createElement('style');s.id='gsCss';s.textContent='#gameSwitch{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;background:rgba(15,20,40,.6);backdrop-filter:blur(4px);padding:18px}#gameSwitch.show{display:flex}.gs-box{background:#fff;color:#1d2f43;max-width:380px;width:100%;border-radius:20px;padding:24px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.35);font-family:system-ui,-apple-system,Segoe UI,sans-serif;animation:gsPop .3s ease-out}@keyframes gsPop{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:scale(1)}}.gs-emoji{font-size:3rem;line-height:1}.gs-box h2{margin:8px 0 8px;font-size:1.3rem}.gs-box p{margin:6px 0;line-height:1.5;color:#3a4a5e}.gs-actions{display:flex;gap:10px;justify-content:center;margin-top:16px;flex-wrap:wrap}.gs-actions button{font:inherit;font-weight:800;border:0;border-radius:12px;padding:12px 18px;cursor:pointer}.gs-go{background:linear-gradient(135deg,#0a7fa8,#3dc8d8);color:#fff}.gs-stay{background:#eef3f9;color:#3a4a5e}';document.head.appendChild(s)}
+async function offerGameSwitch(newGame){
+  if(switchShown)return;switchShown=true;
+  ensureSwitchCss();
+  const title=await gameTitleOf(newGame);
+  let o=document.getElementById('gameSwitch');
+  if(!o){o=document.createElement('div');o.id='gameSwitch';document.body.appendChild(o)}
+  o.innerHTML='<div class="gs-box"><div class="gs-emoji">🎮</div><h2>Neues Spiel!</h2><p>Deine Lehrkraft hat ein neues Spiel zugewiesen:<br><b>'+title.replace(/[&<>]/g,'')+'</b></p><p>Willst du jetzt in das neue Spiel wechseln?</p><div class="gs-actions"><button class="gs-go">🚀 Jetzt wechseln</button><button class="gs-stay">Später</button></div></div>';
+  o.className='show';
+  o.querySelector('.gs-go').onclick=()=>{try{const id=JSON.parse(localStorage.getItem(IDENT)||'{}');id.game=newGame;localStorage.setItem(IDENT,JSON.stringify(id))}catch(e){}location.href='/games/'+encodeURIComponent(newGame)+'/'};
+  o.querySelector('.gs-stay').onclick=()=>{o.className='';switchShown=false}; // beim nächsten Heartbeat erneut anbieten
+}
 // Ohne gültige ident im localStorage geht es zurück zum Portal.
 async function initCloud(){
   if(new URLSearchParams(location.search).get('test')==='1'){cloudOn=false;setAccountUI();showToast('🧪 Testmodus – Fortschritt wird nicht gespeichert');return}
