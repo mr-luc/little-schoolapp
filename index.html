@@ -78,6 +78,17 @@
   // Bereits angemeldet? Spiel der Klasse serverseitig prüfen (kann neu zugewiesen
   // worden sein) und direkt weiterleiten – sonst das Login-Formular zeigen.
   (async function(){
+    // Direkt-Login per QR-Code (?n=…&p=…): Felder vorausfüllen und automatisch
+    // anmelden. Danach die Parameter wieder aus der URL entfernen, damit das
+    // Passwort nicht in der Browser-Historie liegen bleibt.
+    const qp=new URLSearchParams(location.search);
+    const qn=qp.get('n'), qp_=qp.get('p');
+    if(qn&&qp_){
+      try{history.replaceState({},'',location.pathname);}catch(e){}
+      bindForm();
+      $('#name').value=qn; $('#pw').value=qp_;
+      submit();return;
+    }
     const id=getIdent();
     if(id&&id.code&&id.name){
       try{
